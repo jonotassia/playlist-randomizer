@@ -1,4 +1,6 @@
 from classes.playlist import Playlist
+from classes.helper import PathManager
+import subprocess
 import vlc
 
 
@@ -11,30 +13,24 @@ if __name__ == "__main__":
         # Load Playlist
         if selection == "1":
             playlist = Playlist()
+
+            # # Prompt user for scheme name, and if not blank, generate spec
             scheme_name = input("Please provide a scheme name: ")
 
             if not scheme_name:
                 quit(1)
 
-            # Prompt user for scheme name, and if not blank, generate spec
-            playlist.generate_playlist("scheme", 200)
+            playlist.generate_playlist(scheme_name, 200)
 
-            # Create new VLC instance, media player, and media list
-            player = vlc.Instance()
-            media_list = player.media_list_new()
-            media_player = player.media_list_player_new()
+            # Create list of videos from playlist, beginning with the path to the VLC executable.
+            vlc_process_cmd: list = [PathManager.VLC_PATH.as_posix()]
 
-            # Populate media list
+            # Add videos from playlist. IMPORTANT: Paths of videos must be URI
             while playlist.video_queue:
-                media = player.media_new(playlist.dequeue_playlist())
-                media_list.add_media(media)
+                vlc_process_cmd.append(playlist.dequeue_playlist().absolute().as_uri())
 
-            # Assign media list to player
-            media_player.set_media_list(media_list)
-
-            # Set loop and play
-            player.vlm_set_loop(scheme_name, True)
-            media_player.play()
+            # Create subprocess
+            p = subprocess.Popen(vlc_process_cmd)
 
         elif selection == "2":
             pass

@@ -5,6 +5,7 @@ from pathlib import Path
 class PathManager:
     # --------------------- Class Variables -----------------------------
     TV_PATH = Path("./data/TV Shows/")
+    VLC_PATH = Path("C:/Program Files/VideoLAN/VLC/vlc.exe")
 
     # --------------------- Search Functions ----------------------------
     @staticmethod

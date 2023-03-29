@@ -1,6 +1,6 @@
 # Defines the playlist class and its associated methods
-from classes.helper import PathManager
-from classes.scheme import Scheme
+from src.helper import PathManager
+from src.scheme import Scheme
 
 from collections import deque
 from pathlib import Path, WindowsPath

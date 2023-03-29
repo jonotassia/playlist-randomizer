@@ -1,5 +1,5 @@
 # Playlist scheme and related methods
-from classes.helper import PathManager
+from src.helper import PathManager
 
 import pandas as pd
 from pathlib import WindowsPath

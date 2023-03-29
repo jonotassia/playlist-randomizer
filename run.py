@@ -4,7 +4,7 @@ from src.gui import Interface
 
 import subprocess
 import PySimpleGUI as sg
-
+from pathlib import Path
 
 def run_playlist():
     """
@@ -47,11 +47,24 @@ if __name__ == "__main__":
 
     # Create event loop
     while True:
-        event, values = window.read()
+        event, values = window.read(timeout=1000)
         # End programme if user closes window
         if event == sg.WIN_CLOSED:
             break
 
+        if event == "-TV_PATH-":
+            tv_path = Path(values["-TV_PATH-"])
+            if tv_path.exists():
+                PathManager.TV_PATH = tv_path
+                interface.main_phase = 2
+                window.extend_layout(window["-MAIN-"], interface.main_layout)
+            else:
+
+                interface.error_message("Invalid Path")
+
+        window.refresh()
+
     window.close()
 
+    # Save any paths that have been changed during programme run
     PathManager.save_paths()

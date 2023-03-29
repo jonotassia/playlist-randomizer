@@ -10,15 +10,20 @@ class Interface:
         self.scheme: Scheme = Scheme("Blank")
         self.playlist: Playlist = Playlist()
 
+        # Main Layout
+        self.main_phase: int = 1
+        self._main_layout: sg.Column
+        self._layout: sg.Column
+
         # Playlist Layouts
-        self.playlist_phase: int = 3
+        self.playlist_phase: int = 1
         self._playlist_layout: sg.Column
         self._playlist_phase_1: sg.Column
         self._playlist_phase_2: sg.Column
         self._playlist_phase_3: sg.Column
 
         # Scheme Layouts
-        self.scheme_phase: int = 4
+        self.scheme_phase: int = 1
         self._scheme_layout: sg.Column
         self._scheme_phase_1: sg.Column
         self._scheme_phase_2: sg.Column
@@ -26,7 +31,7 @@ class Interface:
         self._scheme_phase_4: sg.Column
 
         # Show Layouts
-        self.show_phase: int = 3
+        self.show_phase: int = 1
         self._show_layout: sg.Column
         self._show_phase_1: sg.Column
         self._show_phase_2: sg.Column
@@ -226,26 +231,50 @@ class Interface:
         return layout
 
     @property
+    def main_layout(self):
+        layout = [
+            [
+                sg.Frame('Playlist', self.playlist_layout, key="-PLAYLIST-"),
+                sg.VSeparator(),
+                sg.Frame('Scheme', self.scheme_layout, key="-SCHEME-"),
+                sg.VSeparator(),
+                sg.Frame('Shows', self.show_layout, key="-SHOWS")
+            ]
+        ]
+
+        return layout
+
+    @property
     def layout(self):
+        # Once the TV_PATH has been entered, add the remaining frames
         layout = [
             [
                 sg.Text("TV/Movie Directory: "),
                 sg.In(default_text=PathManager.TV_PATH, size=(25, 1), enable_events=True, key="-TV_PATH-"),
                 sg.FolderBrowse()
+            ],
+            [
+                sg.Frame("", layout=[[]], key="-MAIN-")
             ]
         ]
-
-        # Once the TV_PATH has been entered, add the remaining frames
-        if PathManager.TV_PATH:
-            layout.append([
-                sg.Frame('Playlist', self.playlist_layout),
-                sg.VSeparator(),
-                sg.Frame('Scheme', self.scheme_layout),
-                sg.VSeparator(),
-                sg.Frame('Shows', self.show_layout)
-            ])
-
         return layout
+
+    @staticmethod
+    def error_message(text):
+        """
+        Used to generate an error window if something is entered incorrectly
+        :param text: Error message to display to user
+        :return: None
+        """
+        window = sg.Window("Error", layout=[[sg.Text(text, text_color="red")]])
+
+        while True:
+            event, values = window.read()
+            # End programme if user closes window
+            if event == sg.WIN_CLOSED:
+                break
+
+        window.close()
 
 
 if __name__ == "__main__":

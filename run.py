@@ -1,38 +1,11 @@
 from src.playlist import Playlist
+from src.scheme import Scheme
 from src.helper import PathManager
 from src.gui import Interface
 
 import subprocess
 import PySimpleGUI as sg
 from pathlib import Path
-
-def run_playlist():
-    """
-    Set VLC path, then loads and plays a playlist.
-    """
-    # Set VLC path. If it fails, return to prompt.
-    if not PathManager.set_vlc_path():
-        return
-
-    playlist = Playlist()
-
-    # # Prompt user for scheme name, and if not blank, generate spec
-    scheme_name = input("Please provide a scheme name: ")
-
-    if not scheme_name:
-        return
-
-    playlist.generate_playlist(scheme_name, 200)
-
-    # Create list of videos from playlist, beginning with the path to the VLC executable.
-    vlc_process_cmd: list = [PathManager.VLC_PATH.as_posix()]
-
-    # Add videos from playlist. IMPORTANT: Paths of videos must be URI
-    while playlist.video_queue:
-        vlc_process_cmd.append(playlist.dequeue_playlist().absolute().as_uri())
-
-    # Create subprocess
-    p = subprocess.Popen(vlc_process_cmd)
 
 
 if __name__ == "__main__":
@@ -52,15 +25,77 @@ if __name__ == "__main__":
         if event == sg.WIN_CLOSED:
             break
 
+        # --------------- Main Layout Event Checks -----------------------
+
+        # If TV_PATH entered, validate and set TV_PATH variable in PathManager. Otherwise, throw error.
         if event == "-TV_PATH-":
             tv_path = Path(values["-TV_PATH-"])
-            if tv_path.exists():
-                PathManager.TV_PATH = tv_path
-                interface.main_phase = 2
-                window.extend_layout(window["-MAIN-"], interface.main_layout)
-            else:
+            try:
+                if tv_path.exists():
+                    PathManager.TV_PATH = tv_path
+                else:
+                    interface.error_message("Invalid Path.")
+            except OSError:
+                interface.error_message("Invalid Path.")
 
-                interface.error_message("Invalid Path")
+        # If the Confirm button is pressed, double-check the tv path in case the user kept the default value
+        if event == "-CONFIRM_TV_PATH-":
+            tv_path = Path(values["-TV_PATH-"])
+            try:
+                if tv_path.exists():
+                    PathManager.TV_PATH = tv_path
+                    window.extend_layout(window["-MAIN-"], interface.main_layout)
+                else:
+                    interface.error_message("Invalid Path.")
+            except OSError:
+                interface.error_message("Invalid Path.")
+
+        # --------------- Playlist Layout Event Checks -----------------------
+
+        # If Generate Playlist pressed, cascade related sections
+        if event == "-GEN_PLAYLIST-":
+            window.extend_layout(window["-PLAYLIST-"], interface.playlist_phase_2)
+
+        # If VLC_PATH entered, validate and set VLC_PATH variable in PathManager. Otherwise, throw error.
+        if event == "-VLC_PATH-":
+            vlc_path = Path(values["-VLC_PATH-"])
+            try:
+                if vlc_path.exists():
+                    PathManager.VLC_PATH = vlc_path
+                else:
+                    interface.error_message("Invalid Path.")
+            except OSError:
+                interface.error_message("Invalid Path.")
+
+        # Verify the duration entered is an int before adding it to the playlist
+        if event == "-PL_DURATION-":
+            duration = values["-PL_DURATION-"]
+            try:
+                interface.playlist.max_length = int(duration)
+            except ValueError:
+                interface.error_message("Please enter a number.")
+
+        # If Playlist Scheme selected, load the scheme and assign to the Interface
+        if event == "-PL_SCHEME_PATH-":
+            try:
+                interface.scheme = Scheme.load_playlist_scheme(values["-PL_SCHEME_PATH-"][0])
+            except FileNotFoundError:
+                interface.error_message("Invalid Scheme.")
+
+        # Display the current playlist to the user
+        if event == "-PL_CONFIRM_PLAYLIST-":
+            if values["-VLC_PATH-"] and values["-PL_DURATION-"] and values["-PL_SCHEME_PATH-"]:
+                interface.playlist.generate_playlist(interface.scheme)
+                window.extend_layout(window["-PLAYLIST-"], interface.playlist_phase_3)
+
+        # Launch VLC with the current playlist
+        if event == "-LAUNCH_VLC-":
+            interface.run_playlist()
+            break
+
+        # --------------- Scheme Layout Event Checks -----------------------
+
+        # --------------- Show Layout Event Checks -----------------------
 
         window.refresh()
 

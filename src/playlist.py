@@ -11,9 +11,10 @@ from vlc import Media
 
 
 class Playlist:
-    def __init__(self):
+    def __init__(self, max_length=200):
         self.video_queue: deque = deque()
         self.length: int
+        self.max_length: int = max_length
 
     # ----------------------- Methods --------------------------------
     def add_to_playlist(self, video: Path, duration: int) -> None:
@@ -51,7 +52,7 @@ class Playlist:
 
         return video
 
-    def generate_playlist(self, scheme_name: str, max_length: int) -> None:
+    def generate_playlist(self, playlist_scheme: Scheme) -> None:
         """
         Generates a playlist, adding  up to a maximum number of minutes
         """
@@ -70,11 +71,8 @@ class Playlist:
         self.video_queue = deque(playlist["video"].to_list())
         queue_length_mins += playlist["duration"].sum()
 
-        # Get requested playlist scheme
-        playlist_scheme = Scheme.load_playlist_scheme(scheme_name)
-
         # Generate random list of videos
-        while queue_length_mins < max_length:
+        while queue_length_mins < self.max_length:
             # Select show from list of shows and user generated frequencies
             selected_show = random.choices(playlist_scheme.data["show_path"].to_list(),
                                            weights=playlist_scheme.data["frequency"].to_list())

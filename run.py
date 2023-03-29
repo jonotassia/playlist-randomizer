@@ -1,7 +1,9 @@
 from src.playlist import Playlist
 from src.helper import PathManager
+from src.gui import Interface
+
 import subprocess
-import vlc
+import PySimpleGUI as sg
 
 
 def run_playlist():
@@ -34,19 +36,22 @@ def run_playlist():
 
 
 if __name__ == "__main__":
+    # Get TV_PATH and VLC_PATH from file
+    PathManager.load_paths()
+    PathManager.set_vlc_path()
+
+    interface = Interface()
+
+    # Create window
+    window = sg.Window("Playlist Randomizer", interface.layout, margins=(40, 20))
+
+    # Create event loop
     while True:
-        selection = input("Select an option: \n"
-                          "   1) Load Playlist\n"
-                          "   2) Modify Scheme\n"
-                          "\n"
-                          "Selection: ")
+        event, values = window.read()
+        # End programme if user closes window
+        if event == sg.WIN_CLOSED:
+            break
 
-        # Load Playlist
-        if selection == "1":
-            run_playlist()
+    window.close()
 
-        elif selection == "2":
-            pass
-
-        if not selection:
-            quit(0)
+    PathManager.save_paths()

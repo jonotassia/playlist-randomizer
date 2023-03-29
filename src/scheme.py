@@ -40,3 +40,7 @@ class Scheme:
             data = cls.new_playlist_scheme(file_name)
 
         return Scheme(file_name, data)
+
+
+if __name__ == "__main__":
+    pass

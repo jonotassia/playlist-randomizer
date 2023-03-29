@@ -118,3 +118,5 @@ class Playlist:
         return playlist
 
 
+if __name__ == "__main__":
+    pass

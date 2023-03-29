@@ -7,18 +7,24 @@ import vlc
 if __name__ == "__main__":
     while True:
         selection = input("Select an option: \n"
-                          "   1) Load Playlist"
-                          "   2) Modify Scheme")
+                          "   1) Load Playlist\n"
+                          "   2) Modify Scheme\n"
+                          "\n"
+                          "Selection: ")
 
         # Load Playlist
         if selection == "1":
+            # Set VLC path. If it fails, return to prompt.
+            if not PathManager.set_vlc_path():
+                continue
+
             playlist = Playlist()
 
             # # Prompt user for scheme name, and if not blank, generate spec
             scheme_name = input("Please provide a scheme name: ")
 
             if not scheme_name:
-                quit(1)
+                continue
 
             playlist.generate_playlist(scheme_name, 200)
 
@@ -35,5 +41,5 @@ if __name__ == "__main__":
         elif selection == "2":
             pass
 
-        else:
-            quit()
+        if not selection:
+            quit(0)

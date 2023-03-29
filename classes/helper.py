@@ -4,6 +4,8 @@ from pathlib import Path
 
 class PathManager:
     # --------------------- Class Variables -----------------------------
+    PROG_PATH = Path("C:/Program Files/")
+    PROG_PATH_86 = Path("C:/Program Files (x86)/")
     TV_PATH = Path("./data/TV Shows/")
     VLC_PATH = Path("C:/Program Files/VideoLAN/VLC/vlc.exe")
 
@@ -38,6 +40,35 @@ class PathManager:
         path_list.sort(key=PathManager.alphanum_key)
 
     # -------------------- Path Functions -----------------------
+    @classmethod
+    def set_vlc_path(cls):
+        """
+        Searches for default install directories of VLC media player. If it can't be found, validates user prompt
+        and sets path.
+        :return: True if path is set, else false
+        """
+        if cls.PROG_PATH.joinpath("VideoLAN").exists():
+            cls.VLC_PATH = Path("C:/Program Files/VideoLAN/VLC/vlc.exe")
+        elif cls.PROG_PATH_86.joinpath("VideoLAN").exists():
+            cls.VLC_PATH = Path("C:/Program Files (x86)/VideoLAN/VLC/vlc.exe")
+        else:
+            # Prompt user for VLC Path. Verify that it is a valid path, otherwise, continue loop.
+            while True:
+                input_path = input("Unable to find VLC path. Please enter path: ")
+                input_path = input_path.strip('\"')
+
+                # If blank, quit the programme
+                if input_path == "":
+                    return False
+
+                try:
+                    cls.VLC_PATH = Path(input_path)
+                    if cls.VLC_PATH.exists() and cls.VLC_PATH.stem == "vlc":
+                        break
+                except:
+                    print("Invalid Path")
+        return True
+
     def get_first_episode(self, search_path: Path) -> Path:
         """
         Returns the first episode of a show. If show is arranged into seasons, searches recursively.

@@ -1,13 +1,15 @@
 import re
 from pathlib import Path
+import os
 
 
 class PathManager:
     # --------------------- Class Variables -----------------------------
     PROG_PATH: Path = Path("C:/Program Files/")
     PROG_PATH_86: Path = Path("C:/Program Files (x86)/")
-    TV_PATH: Path = Path("C:\\Users\\jtass\\PycharmProjects\\playlist_randomizer\\data\\TV Shows")
-    VLC_PATH: Path = Path("C:/Program Files/VideoLAN/VLC/vlc.exe")
+    USER_PATH: Path = Path(os.environ['USERPROFILE'])
+    TV_PATH: Path = None
+    VLC_PATH: Path = None
 
     # --------------------- Search Functions ----------------------------
     @staticmethod
@@ -49,7 +51,7 @@ class PathManager:
         write_string = f"TV_PATH,{cls.TV_PATH}\n" \
                        f"VLC_PATH,{cls.VLC_PATH}"
 
-        with open("./data/paths.csv", "w") as file:
+        with open(cls.USER_PATH.joinpath(".vlc_rand"), "w") as file:
             file.write(write_string)
 
     @classmethod
@@ -58,20 +60,24 @@ class PathManager:
         Loads the TV_PATH and VLC_PATH variables from file.
         :return: None
         """
-        with open("./data/paths.csv", "r") as file:
-            lines = file.readlines()
-            for line in lines:
-                # Split line and assign TV_PATH and VLC_PATH if available
-                line_split = line.split(',')
+        try:
+            with open(cls.USER_PATH.joinpath(".vlc_rand"), "r") as file:
+                lines = file.readlines()
+                for line in lines:
+                    # Split line and assign TV_PATH and VLC_PATH if available
+                    line_split = line.split(',')
 
-                if line_split == line:
-                    return
+                    if line_split == line:
+                        return
 
-                # Handle \n and potential for quotes around file names before assigning
-                if line_split[0] == "TV_PATH":
-                    cls.TV_PATH = Path(line_split[1].rstrip("\n").strip('\"'))
-                if line_split[0] == "VLC_PATH":
-                    cls.VLC_PATH = Path(line_split[1].rstrip("\n").strip('\"'))
+                    # Handle \n and potential for quotes around file names before assigning
+                    if line_split[0] == "TV_PATH":
+                        cls.TV_PATH = Path(line_split[1].rstrip("\n").strip('\"'))
+                    if line_split[0] == "VLC_PATH":
+                        cls.VLC_PATH = Path(line_split[1].rstrip("\n").strip('\"'))
+
+        except FileNotFoundError:
+            return
 
     @classmethod
     def set_vlc_path(cls):

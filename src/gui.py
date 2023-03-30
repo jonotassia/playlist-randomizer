@@ -250,6 +250,13 @@ class Interface:
         # Create subprocess
         p = subprocess.Popen(vlc_process_cmd)
 
+    @staticmethod
+    def move_center(window):
+        screen_width, screen_height = window.get_screen_dimensions()
+        win_width, win_height = window.size
+        x, y = (screen_width - win_width) // 2, (screen_height - win_height) // 2
+        window.move(x, y)
+
 
 if __name__ == "__main__":
     pass

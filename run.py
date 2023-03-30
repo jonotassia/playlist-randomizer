@@ -14,11 +14,11 @@ if __name__ == "__main__":
     interface = Interface()
 
     # Create window
-    window = sg.Window("Playlist Randomizer", interface.layout, margins=(40, 20))
+    window = sg.Window("Playlist Randomizer", interface.layout, margins=(40, 20), resizable=True, finalize=True)
 
     # Create event loop
     while True:
-        event, values = window.read(timeout=1000)
+        event, values = window.read(timeout=300)
         # End programme if user closes window
         if event == sg.WIN_CLOSED:
             break
@@ -43,6 +43,7 @@ if __name__ == "__main__":
                 if tv_path.exists():
                     PathManager.TV_PATH = tv_path
                     if "-GEN_PLAYLIST-" not in window.key_dict:
+                        window.set_min_size((500, 800))
                         window.extend_layout(window["-MAIN-"], interface.main_layout)
                 else:
                     interface.error_message("Invalid Path.")
@@ -350,6 +351,7 @@ if __name__ == "__main__":
             if "-SHOW_SUCCESS-" in window.key_dict:
                 window["-SHOW_SUCCESS-"].hide_row()
 
+        Interface.move_center(window)
         window.refresh()
 
     window.close()

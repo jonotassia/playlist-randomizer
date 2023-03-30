@@ -113,6 +113,16 @@ if __name__ == "__main__":
                 window["-LOAD_SCHEME_NAME-"].hide_row()
                 window["-CONFIRM_LOAD_SCHEME-"].hide_row()
 
+            # Hide phase 4 rows
+            if "-SAVE_SCHEME-" in window.key_dict:
+                # Hide phase 4 rows
+                window[f"-SCHEME_DETAILS-{interface.scheme.title.upper()}"].hide_row()
+                window["-SAVE_SCHEME-"].hide_row()
+                window["-DISCARD_SCHEME-"].hide_row()
+
+                if "-SCHEME_SUCCESS-" in window.key_dict:
+                    window["-SCHEME_SUCCESS-"].hide_row()
+
             # If the new scheme section is not already in the layout, add it. Otherwise, unhide it.
             if "-NEW_SCHEME_NAME-" not in window.key_dict:
                 window.extend_layout(window["-SCHEME-"], interface.scheme_phase_3_new)
@@ -131,6 +141,16 @@ if __name__ == "__main__":
                 window["-NEW_SCHEME_NAME-"].hide_row()
                 window["-CONFIRM_NEW_SCHEME-"].hide_row()
 
+            # Hide phase 4 rows
+            if "-SAVE_SCHEME-" in window.key_dict:
+                # Hide phase 4 rows
+                window[f"-SCHEME_DETAILS-{interface.scheme.title.upper()}"].hide_row()
+                window["-SAVE_SCHEME-"].hide_row()
+                window["-DISCARD_SCHEME-"].hide_row()
+
+                if "-SCHEME_SUCCESS-" in window.key_dict:
+                    window["-SCHEME_SUCCESS-"].hide_row()
+
             # If the existing scheme section is not already in the layout, add it. Otherwise, unhide it.
             if "-LOAD_SCHEME_NAME-" not in window.key_dict:
                 window.extend_layout(window["-SCHEME-"], interface.scheme_phase_3_load)
@@ -141,7 +161,7 @@ if __name__ == "__main__":
         elif event == "-NEW_SCHEME_NAME-":
             if "-SAVE_SCHEME-" in window.key_dict:
                 # Hide phase 4 rows
-                window["-SCHEME_DETAILS-"].hide_row()
+                window[f"-SCHEME_DETAILS-{interface.scheme.title.upper()}"].hide_row()
                 window["-SAVE_SCHEME-"].hide_row()
                 window["-DISCARD_SCHEME-"].hide_row()
 
@@ -151,7 +171,7 @@ if __name__ == "__main__":
         elif event == "-LOAD_SCHEME_NAME-":
             if "-SAVE_SCHEME-" in window.key_dict:
                 # Hide phase 4 rows
-                window["-SCHEME_DETAILS-"].hide_row()
+                window[f"-SCHEME_DETAILS-{interface.scheme.title.upper()}"].hide_row()
                 window["-SAVE_SCHEME-"].hide_row()
                 window["-DISCARD_SCHEME-"].hide_row()
 
@@ -166,14 +186,18 @@ if __name__ == "__main__":
 
             if "-SAVE_SCHEME-" not in window.key_dict:
                 window.extend_layout(window["-SCHEME-"], interface.scheme_phase_4)
+
+            # If specific instance of scheme is not already loaded, extend the window with it
+            elif f"-SCHEME_DETAILS-{interface.scheme.title.upper()}" not in window.key_dict:
+                window.extend_layout(window["-SCHEME-"], [[interface.import_scheme()]])
+
             else:
-                # Reset values in component
-                for index in interface.scheme.data.index.values:
-                    window[f"-SCHEME_SHOW_{index}-"].update(interface.scheme.data.at[index, "show_path"])
-                    window[f"-SCHEME_FREQ_{index}-"].update(interface.scheme.data.at[index, "frequency"])
+                # Reset scroll bar
+                window[f"-SCHEME_DETAILS-{interface.scheme.title.upper()}"].contents_changed()
 
                 # Unhide phase 4 rows
-                window["-SCHEME_DETAILS-"].unhide_row()
+                if f"-SCHEME_DETAILS-{interface.scheme.title.upper()}" in window.key_dict:
+                    window[f"-SCHEME_DETAILS-{interface.scheme.title.upper()}"].unhide_row()
                 window["-SAVE_SCHEME-"].unhide_row()
                 window["-DISCARD_SCHEME-"].unhide_row()
 
@@ -182,14 +206,18 @@ if __name__ == "__main__":
 
             if "-SAVE_SCHEME-" not in window.key_dict:
                 window.extend_layout(window["-SCHEME-"], interface.scheme_phase_4)
-            else:
-                # Reset values in component
 
+            # If specific instance of scheme is not already loaded, extend the window with it
+            elif f"-SCHEME_DETAILS-{interface.scheme.title.upper()}" not in window.key_dict:
+                window.extend_layout(window["-SCHEME-"], [[interface.import_scheme()]])
+
+            else:
                 # Reset scroll bar
-                window["-SCHEME_DETAILS-"].contents_changed()
+                window[f"-SCHEME_DETAILS-{interface.scheme.title.upper()}"].contents_changed()
 
                 # Unhide phase 4 rows
-                window["-SCHEME_DETAILS-"].unhide_row()
+                if f"-SCHEME_DETAILS-{interface.scheme.title.upper()}" in window.key_dict:
+                    window[f"-SCHEME_DETAILS-{interface.scheme.title.upper()}"].unhide_row()
                 window["-SAVE_SCHEME-"].unhide_row()
                 window["-DISCARD_SCHEME-"].unhide_row()
 
@@ -223,7 +251,7 @@ if __name__ == "__main__":
                     window[f"-SCHEME_FREQ_{index}-"].update(interface.scheme.data.at[index, "frequency"])
 
                 # Hide phase 4 rows
-                window["-SCHEME_DETAILS-"].hide_row()
+                window[f"-SCHEME_DETAILS-{interface.scheme.title.upper()}"].hide_row()
                 window["-SAVE_SCHEME-"].hide_row()
                 window["-DISCARD_SCHEME-"].hide_row()
 

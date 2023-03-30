@@ -134,7 +134,7 @@ class Interface:
     def scheme_phase_4(self):
         column_layout = [
             [
-                sg.Column(self.import_scheme(), size_subsample_width=1, size_subsample_height=1.3, scrollable=True, key="-SCHEME_DETAILS-")
+                self.import_scheme()
             ],
             [
                 sg.Button("Save Scheme", enable_events=True, size=(10, 1), key="-SAVE_SCHEME-"),
@@ -186,7 +186,7 @@ class Interface:
     def get_shows() -> list:
         return [show.stem for show in PathManager.TV_PATH.iterdir() if show.is_dir() and show.stem != ".scheme"]
 
-    def import_scheme(self) -> list:
+    def import_scheme(self) -> sg.Column:
         """
         Pulls the show and associated frequency for row line in the scheme. This is sorted by index
         :param scheme: Scheme to pull shows and frequencies from
@@ -199,7 +199,7 @@ class Interface:
                       for k, v in self.scheme.data.to_dict(orient="index").items()]
 
         # Merge into a list of list, then return as column
-        return show_data
+        return sg.Column(show_data, size_subsample_width=1, size_subsample_height=1.3, scrollable=True, key=f"-SCHEME_DETAILS-{self.scheme.title.upper()}")
 
     @staticmethod
     def error_message(text):

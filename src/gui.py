@@ -184,7 +184,7 @@ class Interface:
             [
                 sg.Text("Select an Episode: "),
                 sg.In(episode_text, size=(40, 10), enable_events=True, key=f"-SELECT_EPISODE-"),
-                sg.FileBrowse(initial_folder=episode.parent, key="-EPISODE_SEARCH-")
+                sg.FileBrowse(file_types=("*.exe"), initial_folder=episode.parent, key="-EPISODE_SEARCH-")
             ],
             [
                 sg.Button("Save Changes", size=(25, 1), key="-SAVE_SHOW-"),

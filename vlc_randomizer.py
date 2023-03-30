@@ -65,7 +65,7 @@ if __name__ == "__main__":
 
         # If VLC_PATH entered, validate and set VLC_PATH variable in PathManager. Otherwise, throw error.
         elif event == "-VLC_PATH-":
-            vlc_path = Path(values["-VLC_PATH-"])
+            vlc_path = Path(values["-VLC_PATH-"]).joinpath("vlc.exe")
             try:
                 if vlc_path.exists():
                     PathManager.VLC_PATH = vlc_path

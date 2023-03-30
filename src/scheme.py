@@ -13,19 +13,16 @@ class Scheme:
     @classmethod
     def new_playlist_scheme(cls, file_name: str):
         # Grab folder name for each video
-        show_folders = [folder for folder in PathManager.TV_PATH.iterdir()]
+        show_folders: list = [folder for folder in PathManager.TV_PATH.glob("*[!.csv]")]
 
         # Create and populate dataframe
-        show_folder_df = pd.DataFrame(columns=["show_path", "frequency"])
+        show_folder_df: pd.DataFrame = pd.DataFrame(columns=["show_path", "frequency"])
         show_folder_df["show_path"] = show_folders
         show_folder_df["frequency"] = show_folder_df["frequency"].fillna(1)
 
         # Make relative to TV_PATH and remove playlist row
         show_folder_df["show_path"] = show_folder_df["show_path"].apply(lambda x: x.relative_to(PathManager.TV_PATH))
         show_folder_df = show_folder_df[show_folder_df["show_path"] != WindowsPath('.scheme')]
-
-        # Create playlist file
-        show_folder_df.to_csv(PathManager.TV_PATH.as_posix() + "/.scheme/" + file_name + ".csv")
 
         return Scheme(file_name, show_folder_df)
 
@@ -34,12 +31,23 @@ class Scheme:
         """
         Loads a playlist scheme from file. If none found, generates a new one
         """
+        # Declare variables
+        scheme: Scheme
+        data: pd.DataFrame
+
         try:
             data = pd.read_csv(PathManager.TV_PATH.as_posix() + "/.scheme/" + file_name + ".csv", index_col=0)
+            scheme = Scheme(file_name, data)
         except FileNotFoundError:
-            data = cls.new_playlist_scheme(file_name)
+            scheme = cls.new_playlist_scheme(file_name)
 
-        return Scheme(file_name, data)
+        return scheme
+
+    def refresh_scheme(self):
+        self.data = pd.read_csv(PathManager.TV_PATH.as_posix() + "/.scheme/" + self.title + ".csv", index_col=0)
+
+    def save_scheme(self):
+        self.data.to_csv(PathManager.TV_PATH.as_posix() + "/.scheme/" + self.title + ".csv")
 
 
 if __name__ == "__main__":

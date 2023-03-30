@@ -28,7 +28,7 @@ if __name__ == "__main__":
         # --------------- Main Layout Event Checks -----------------------
 
         # If TV_PATH entered, validate and set TV_PATH variable in PathManager. Otherwise, throw error.
-        if event == "-TV_PATH-":
+        elif event == "-TV_PATH-":
             tv_path = Path(values["-TV_PATH-"])
             try:
                 if tv_path.exists():
@@ -39,12 +39,13 @@ if __name__ == "__main__":
                 interface.error_message("Invalid Path.")
 
         # If the Confirm button is pressed, double-check the tv path in case the user kept the default value
-        if event == "-CONFIRM_TV_PATH-":
+        elif event == "-CONFIRM_TV_PATH-":
             tv_path = Path(values["-TV_PATH-"])
             try:
                 if tv_path.exists():
                     PathManager.TV_PATH = tv_path
-                    window.extend_layout(window["-MAIN-"], interface.main_layout)
+                    if "-GEN_PLAYLIST-" not in window.key_dict:
+                        window.extend_layout(window["-MAIN-"], interface.main_layout)
                 else:
                     interface.error_message("Invalid Path.")
             except OSError:
@@ -52,12 +53,16 @@ if __name__ == "__main__":
 
         # --------------- Playlist Layout Event Checks -----------------------
 
-        # If Generate Playlist pressed, cascade related sections
-        if event == "-GEN_PLAYLIST-":
-            window.extend_layout(window["-PLAYLIST-"], interface.playlist_phase_2)
+        # If Generate Playlist pressed, cascade related sections if not already cascaded
+        elif event == "-GEN_PLAYLIST-":
+            try:
+                if "-VLC_PATH-" not in window.key_dict:
+                    window.extend_layout(window["-PLAYLIST-"], interface.playlist_phase_2)
+            except KeyError:
+                continue
 
         # If VLC_PATH entered, validate and set VLC_PATH variable in PathManager. Otherwise, throw error.
-        if event == "-VLC_PATH-":
+        elif event == "-VLC_PATH-":
             vlc_path = Path(values["-VLC_PATH-"])
             try:
                 if vlc_path.exists():
@@ -68,7 +73,7 @@ if __name__ == "__main__":
                 interface.error_message("Invalid Path.")
 
         # Verify the duration entered is an int before adding it to the playlist
-        if event == "-PL_DURATION-":
+        elif event == "-PL_DURATION-":
             duration = values["-PL_DURATION-"]
             try:
                 interface.playlist.max_length = int(duration)
@@ -76,24 +81,108 @@ if __name__ == "__main__":
                 interface.error_message("Please enter a number.")
 
         # If Playlist Scheme selected, load the scheme and assign to the Interface
-        if event == "-PL_SCHEME_PATH-":
+        elif event == "-PL_SCHEME_PATH-":
             try:
                 interface.scheme = Scheme.load_playlist_scheme(values["-PL_SCHEME_PATH-"][0])
             except FileNotFoundError:
                 interface.error_message("Invalid Scheme.")
 
-        # Display the current playlist to the user
-        if event == "-PL_CONFIRM_PLAYLIST-":
+        # Display the current playlist to the user and cascade Launch VLC button if not already expanded
+        elif event == "-PL_CONFIRM_PLAYLIST-":
             if values["-VLC_PATH-"] and values["-PL_DURATION-"] and values["-PL_SCHEME_PATH-"]:
                 interface.playlist.generate_playlist(interface.scheme)
-                window.extend_layout(window["-PLAYLIST-"], interface.playlist_phase_3)
+                if "-LAUNCH_VLC-" not in window.key_dict:
+                    window.extend_layout(window["-PLAYLIST-"], interface.playlist_phase_3)
 
         # Launch VLC with the current playlist
-        if event == "-LAUNCH_VLC-":
+        elif event == "-LAUNCH_VLC-":
             interface.run_playlist()
             break
 
         # --------------- Scheme Layout Event Checks -----------------------
+
+        # Cascade New Scheme and Load Scheme if not already done
+        elif event == "-MOD_SCHEME-":
+            if "-NEW_SCHEME-" not in window.key_dict:
+                window.extend_layout(window["-SCHEME-"], interface.scheme_phase_2)
+
+        # Cascade New Scheme Path section, hiding load scheme if that has already been pressed
+        elif event == "-NEW_SCHEME-":
+            # If New Scheme Name section is already in window, hide it
+            if "-LOAD_SCHEME_NAME-" in window.key_dict:
+                window["-LOAD_SCHEME_NAME-"].hide_row()
+                window["-CONFIRM_LOAD_SCHEME-"].hide_row()
+
+            # If the new scheme section is not already in the layout, add it. Otherwise, unhide it.
+            if "-NEW_SCHEME_NAME-" not in window.key_dict:
+                window.extend_layout(window["-SCHEME-"], interface.scheme_phase_3_new)
+            else:
+                window["-NEW_SCHEME_NAME-"].unhide_row()
+                window["-CONFIRM_NEW_SCHEME-"].unhide_row()
+
+            # Hide the success message from the bottom of the frame when new scheme loaded
+            if "-SUCCESS_SCHEME-" in window.key_dict:
+                window["-SUCCESS_SCHEME-"].hide_row()
+
+        # Cascade Load Scheme section, hiding new scheme path if that has already been pressed
+        elif event == "-LOAD_SCHEME-":
+            # If New Scheme Name section is already in window, hide it
+            if "-NEW_SCHEME_NAME-" in window.key_dict:
+                window["-NEW_SCHEME_NAME-"].hide_row()
+                window["-CONFIRM_NEW_SCHEME-"].hide_row()
+
+            # If the existing scheme section is not already in the layout, add it. Otherwise, unhide it.
+            if "-LOAD_SCHEME_NAME-" not in window.key_dict:
+                window.extend_layout(window["-SCHEME-"], interface.scheme_phase_3_load)
+            else:
+                window["-LOAD_SCHEME_NAME-"].unhide_row()
+                window["-CONFIRM_LOAD_SCHEME-"].unhide_row()
+
+        # Check if scheme exists and whether user is in load or new mode.
+        # If so, load that scheme, else create a new one.
+        # Cascade scheme editing windows if they are not already expanded.
+        elif event == "-CONFIRM_NEW_SCHEME-":
+            interface.scheme = Scheme.load_playlist_scheme(values["-NEW_SCHEME_NAME-"])
+
+            if "-SAVE_SCHEME-" not in window.key_dict:
+                window.extend_layout(window["-SCHEME-"], interface.scheme_phase_4)
+
+        elif event == "-CONFIRM_LOAD_SCHEME-":
+            interface.scheme = Scheme.load_playlist_scheme(values["-LOAD_SCHEME_NAME-"][0])
+
+            if "-SAVE_SCHEME-" not in window.key_dict:
+                window.extend_layout(window["-SCHEME-"], interface.scheme_phase_4)
+
+        # When the save button is pressed, 2 key functions are performed:
+        #   1. The changes are compiled in interface.scheme.data
+        #   2. The changes to the dataframe are saved to file
+        # If successful, extends or unhides a success message
+        elif event == "-SAVE_SCHEME-":
+            try:
+                # Incorporate changes to frequency for show to dataframe, then save changes
+                for index in interface.scheme.data.index.values:
+                    interface.scheme.data.iloc[index]["frequency"] = values[f"-SCHEME_FREQ_{index}-"]
+                interface.scheme.save_scheme()
+
+                # Cascade success message, or unhide if already there
+                if "-SUCCESS_SCHEME-" not in window.key_dict:
+                    window.extend_layout(window["-SCHEME-"], [[interface.success_message("Scheme successfully saved.", "-SCHEME_SUCCESS-")]])
+                else:
+                    window["-SUCCESS_SCHEME-"].unhide_row()
+
+            except:
+                interface.error_message("Unable to save file.")
+
+        # If Discard Scheme, reload the scheme from above and hide the success message
+        elif event == "-DISCARD_SCHEME-":
+            try:
+                interface.scheme.refresh_scheme()
+            except FileNotFoundError:
+                interface.error_message("Scheme not found.")
+
+            # Hide the success message from the bottom of the frame when new scheme loaded
+            if "-SUCCESS_SCHEME-" in window.key_dict:
+                window["-SUCCESS_SCHEME-"].hide_row()
 
         # --------------- Show Layout Event Checks -----------------------
 

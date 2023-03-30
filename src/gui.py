@@ -61,7 +61,7 @@ class Interface:
             ],
             [
                 sg.Text("Scheme: "),
-                sg.Listbox(values=self.get_schemes(), enable_events=True, size=(40, 20), key="-PL_SCHEME_PATH-"),
+                sg.Listbox(values=self.get_schemes(), enable_events=True, size=(40, 5), key="-PL_SCHEME_PATH-"),
             ],
             [
                 sg.Button("Confirm", size=(25, 1), enable_events=True, key="-PL_CONFIRM_PLAYLIST-"),
@@ -103,23 +103,28 @@ class Interface:
         return column_layout
 
     @property
-    def scheme_phase_2_new(self):
+    def scheme_phase_3_new(self):
         column_layout = [
             [
                 sg.Text("Scheme Path: "),
-                sg.In(size=(25, 1), enable_events=True, key="-NEW_SCHEME_PATH-"),
-                sg.FolderBrowse()
+                sg.In(size=(25, 1), enable_events=True, key="-NEW_SCHEME_NAME-"),
+            ],
+            [
+                sg.Button("Confirm", size=(20, 1), enable_events=True, key="-CONFIRM_NEW_SCHEME-")
             ]
         ]
 
         return column_layout
 
     @property
-    def scheme_phase_2_load(self):
+    def scheme_phase_3_load(self):
         column_layout = [
             [
                 sg.Text("Scheme: "),
-                sg.Listbox(values=self.get_schemes(), enable_events=True, size=(40, 20), key="-EXISTING_SCHEME-"),
+                sg.Listbox(values=self.get_schemes(), enable_events=True, size=(40, 5), key="-LOAD_SCHEME_NAME-"),
+            ],
+            [
+                sg.Button("Confirm", size=(20, 1), enable_events=True, key="-CONFIRM_LOAD_SCHEME-")
             ]
         ]
 
@@ -183,17 +188,18 @@ class Interface:
 
     def import_scheme(self) -> sg.Column:
         """
-        Pulls the show and associated frequency for row line in the scheme
+        Pulls the show and associated frequency for row line in the scheme. This is sorted by index
         :param scheme: Scheme to pull shows and frequencies from
         :return: Column for use in scheme_layout column
         """
         # Get shows and frequencies
-        shows = [sg.Checkbox(show) for show in self.scheme.data["show_path"]]
-        freqs = [sg.In(size=(10, 1), default_text=freq) for freq in self.scheme.data["frequency"]]
+        show_data = [[sg.Text("Frequency"), sg.Text("Show/Movie")]]
+        show_data += [[sg.In(size=(10, 1), default_text=v["frequency"], enable_events=True, key=f"-SCHEME_FREQ_{k}-"),
+                      sg.Text(v["show_path"], key=f"-SCHEME_CHECK_{k}-")]
+                      for k, v in self.scheme.data.to_dict(orient="index").items()]
 
         # Merge into a list of list, then return as column
-        show_select_column = [list(element) for element in zip(shows, freqs)]
-        return sg.Column(show_select_column, scrollable=True)
+        return sg.Column(show_data, size_subsample_width=1, size_subsample_height=1.3, scrollable=True, key="-SCHEME_DETAILS-")
 
     @staticmethod
     def error_message(text):
@@ -211,6 +217,16 @@ class Interface:
                 break
 
         window.close()
+
+    @staticmethod
+    def success_message(text: str, key: str) -> sg.Text:
+        """
+        Used to generate an error window if something is entered incorrectly
+        :param text: Error message to display to user
+        :param key: A key for finding in the PySimpleGUI window
+        :return: None
+        """
+        return sg.Text(text, text_color="green", key=key)
 
     def run_playlist(self):
         """

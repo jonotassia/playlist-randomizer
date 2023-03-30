@@ -134,7 +134,7 @@ class Interface:
     def scheme_phase_4(self):
         column_layout = [
             [
-                self.import_scheme()
+                sg.Column(self.import_scheme(), size_subsample_width=1, size_subsample_height=1.3, scrollable=True, key="-SCHEME_DETAILS-")
             ],
             [
                 sg.Button("Save Scheme", enable_events=True, size=(10, 1), key="-SAVE_SCHEME-"),
@@ -186,7 +186,7 @@ class Interface:
     def get_shows() -> list:
         return [show.stem for show in PathManager.TV_PATH.iterdir() if show.is_dir() and show.stem != ".scheme"]
 
-    def import_scheme(self) -> sg.Column:
+    def import_scheme(self) -> list:
         """
         Pulls the show and associated frequency for row line in the scheme. This is sorted by index
         :param scheme: Scheme to pull shows and frequencies from
@@ -195,11 +195,11 @@ class Interface:
         # Get shows and frequencies
         show_data = [[sg.Text("Frequency"), sg.Text("Show/Movie")]]
         show_data += [[sg.In(size=(10, 1), default_text=v["frequency"], enable_events=True, key=f"-SCHEME_FREQ_{k}-"),
-                      sg.Text(v["show_path"], key=f"-SCHEME_CHECK_{k}-")]
+                      sg.Text(v["show_path"], key=f"-SCHEME_SHOW_{k}-")]
                       for k, v in self.scheme.data.to_dict(orient="index").items()]
 
         # Merge into a list of list, then return as column
-        return sg.Column(show_data, size_subsample_width=1, size_subsample_height=1.3, scrollable=True, key="-SCHEME_DETAILS-")
+        return show_data
 
     @staticmethod
     def error_message(text):

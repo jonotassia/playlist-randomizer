@@ -138,6 +138,26 @@ if __name__ == "__main__":
                 window["-LOAD_SCHEME_NAME-"].unhide_row()
                 window["-CONFIRM_LOAD_SCHEME-"].unhide_row()
 
+        elif event == "-NEW_SCHEME_NAME-":
+            if "-SAVE_SCHEME-" in window.key_dict:
+                # Hide phase 4 rows
+                window["-SCHEME_DETAILS-"].hide_row()
+                window["-SAVE_SCHEME-"].hide_row()
+                window["-DISCARD_SCHEME-"].hide_row()
+
+                if "-SCHEME_SUCCESS-" in window.key_dict:
+                    window["-SCHEME_SUCCESS-"].hide_row()
+
+        elif event == "-LOAD_SCHEME_NAME-":
+            if "-SAVE_SCHEME-" in window.key_dict:
+                # Hide phase 4 rows
+                window["-SCHEME_DETAILS-"].hide_row()
+                window["-SAVE_SCHEME-"].hide_row()
+                window["-DISCARD_SCHEME-"].hide_row()
+
+                if "-SCHEME_SUCCESS-" in window.key_dict:
+                    window["-SCHEME_SUCCESS-"].hide_row()
+
         # Check if scheme exists and whether user is in load or new mode.
         # If so, load that scheme, else create a new one.
         # Cascade scheme editing windows if they are not already expanded.
@@ -146,12 +166,32 @@ if __name__ == "__main__":
 
             if "-SAVE_SCHEME-" not in window.key_dict:
                 window.extend_layout(window["-SCHEME-"], interface.scheme_phase_4)
+            else:
+                # Reset values in component
+                for index in interface.scheme.data.index.values:
+                    window[f"-SCHEME_SHOW_{index}-"].update(interface.scheme.data.at[index, "show_path"])
+                    window[f"-SCHEME_FREQ_{index}-"].update(interface.scheme.data.at[index, "frequency"])
+
+                # Unhide phase 4 rows
+                window["-SCHEME_DETAILS-"].unhide_row()
+                window["-SAVE_SCHEME-"].unhide_row()
+                window["-DISCARD_SCHEME-"].unhide_row()
 
         elif event == "-CONFIRM_LOAD_SCHEME-":
             interface.scheme = Scheme.load_playlist_scheme(values["-LOAD_SCHEME_NAME-"][0])
 
             if "-SAVE_SCHEME-" not in window.key_dict:
                 window.extend_layout(window["-SCHEME-"], interface.scheme_phase_4)
+            else:
+                # Reset values in component
+
+                # Reset scroll bar
+                window["-SCHEME_DETAILS-"].contents_changed()
+
+                # Unhide phase 4 rows
+                window["-SCHEME_DETAILS-"].unhide_row()
+                window["-SAVE_SCHEME-"].unhide_row()
+                window["-DISCARD_SCHEME-"].unhide_row()
 
         # When the save button is pressed, 2 key functions are performed:
         #   1. The changes are compiled in interface.scheme.data
@@ -161,14 +201,14 @@ if __name__ == "__main__":
             try:
                 # Incorporate changes to frequency for show to dataframe, then save changes
                 for index in interface.scheme.data.index.values:
-                    interface.scheme.data.iloc[index]["frequency"] = values[f"-SCHEME_FREQ_{index}-"]
+                    interface.scheme.data.at[index, "frequency"] = values[f"-SCHEME_FREQ_{index}-"]
                 interface.scheme.save_scheme()
 
                 # Cascade success message, or unhide if already there
-                if "-SUCCESS_SCHEME-" not in window.key_dict:
+                if "-SCHEME_SUCCESS-" not in window.key_dict:
                     window.extend_layout(window["-SCHEME-"], [[interface.success_message("Scheme successfully saved.", "-SCHEME_SUCCESS-")]])
                 else:
-                    window["-SUCCESS_SCHEME-"].unhide_row()
+                    window["-SCHEME_SUCCESS-"].unhide_row()
 
             except:
                 interface.error_message("Unable to save file.")
@@ -177,12 +217,22 @@ if __name__ == "__main__":
         elif event == "-DISCARD_SCHEME-":
             try:
                 interface.scheme.refresh_scheme()
+
+                for index in interface.scheme.data.index.values:
+                    window[f"-SCHEME_SHOW_{index}-"].update(interface.scheme.data.at[index, "show_path"])
+                    window[f"-SCHEME_FREQ_{index}-"].update(interface.scheme.data.at[index, "frequency"])
+
+                # Hide phase 4 rows
+                window["-SCHEME_DETAILS-"].hide_row()
+                window["-SAVE_SCHEME-"].hide_row()
+                window["-DISCARD_SCHEME-"].hide_row()
+
             except FileNotFoundError:
                 interface.error_message("Scheme not found.")
 
             # Hide the success message from the bottom of the frame when new scheme loaded
-            if "-SUCCESS_SCHEME-" in window.key_dict:
-                window["-SUCCESS_SCHEME-"].hide_row()
+            if "-SCHEME_SUCCESS-" in window.key_dict:
+                window["-SCHEME_SUCCESS-"].hide_row()
 
         # --------------- Show Layout Event Checks -----------------------
 

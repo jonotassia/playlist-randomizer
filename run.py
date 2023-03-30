@@ -43,7 +43,8 @@ if __name__ == "__main__":
                 if tv_path.exists():
                     PathManager.TV_PATH = tv_path
                     if "-GEN_PLAYLIST-" not in window.key_dict:
-                        window.set_min_size((500, 800))
+                        window.set_min_size((800, 800))
+                        Interface.move_center(window)
                         window.extend_layout(window["-MAIN-"], interface.main_layout)
                 else:
                     interface.error_message("Invalid Path.")
@@ -56,6 +57,7 @@ if __name__ == "__main__":
         elif event == "-GEN_PLAYLIST-":
             if "-VLC_PATH-" not in window.key_dict:
                 window.extend_layout(window["-PLAYLIST-"], interface.playlist_phase_2)
+                Interface.move_center(window)
 
         # If VLC_PATH entered, validate and set VLC_PATH variable in PathManager. Otherwise, throw error.
         elif event == "-VLC_PATH-":
@@ -78,6 +80,9 @@ if __name__ == "__main__":
 
         # If Playlist Scheme selected, load the scheme and assign to the Interface
         elif event == "-PL_SCHEME_PATH-":
+            if not values["-PL_SCHEME_PATH-"]:
+                continue
+
             try:
                 interface.scheme = Scheme.load_playlist_scheme(values["-PL_SCHEME_PATH-"][0])
             except FileNotFoundError:
@@ -118,6 +123,7 @@ if __name__ == "__main__":
         elif event == "-MOD_SCHEME-":
             if "-NEW_SCHEME-" not in window.key_dict:
                 window.extend_layout(window["-SCHEME-"], interface.scheme_phase_2)
+                Interface.move_center(window)
 
         # Cascade New Scheme Path section, hiding load scheme if that has already been pressed
         elif event == "-NEW_SCHEME-":
@@ -196,6 +202,7 @@ if __name__ == "__main__":
         # Cascade scheme editing windows if they are not already expanded.
         elif event == "-CONFIRM_NEW_SCHEME-":
             interface.scheme = Scheme.load_playlist_scheme(values["-NEW_SCHEME_NAME-"])
+            window["-LOAD_SCHEME_NAME-"].update(interface.get_schemes())
 
             if "-SAVE_SCHEME-" not in window.key_dict:
                 window.extend_layout(window["-SCHEME-"], interface.scheme_phase_4)
@@ -217,6 +224,9 @@ if __name__ == "__main__":
                 window["-DISCARD_SCHEME-"].unhide_row()
 
         elif event == "-CONFIRM_LOAD_SCHEME-":
+            if not values["-LOAD_SCHEME_NAME-"]:
+                continue
+
             interface.scheme = Scheme.load_playlist_scheme(values["-LOAD_SCHEME_NAME-"][0])
 
             if "-SAVE_SCHEME-" not in window.key_dict:
@@ -289,8 +299,12 @@ if __name__ == "__main__":
         elif event == "-UPDATE_SHOW-":
             if "-SELECT_SHOW-" not in window.key_dict:
                 window.extend_layout(window["-SHOWS-"], interface.show_phase_2)
+                Interface.move_center(window)
 
         elif event == "-SELECT_SHOW-":
+            if not values["-SELECT_SHOW-"]:
+                continue
+
             # Assign new show to interface
             show = PathManager.TV_PATH.joinpath(Path(values["-SELECT_SHOW-"][0]))
             try:
@@ -313,6 +327,13 @@ if __name__ == "__main__":
             else:
                 # Update select episodes with current path in case it has changed
                 curr_episode = pm.get_current_episode(interface.show)
+
+                # Handle season show vs single folder show
+                if curr_episode.parent.parent != PathManager.TV_PATH:
+                    curr_episode_text = curr_episode.parts[-2] + '/' + curr_episode.parts[-1]
+                else:
+                    curr_episode_text = curr_episode.stem + curr_episode.suffix
+
                 window["-SELECT_EPISODE-"].update(curr_episode.stem + curr_episode.suffix)
 
                 # Unhide phase 3 rows
@@ -351,7 +372,6 @@ if __name__ == "__main__":
             if "-SHOW_SUCCESS-" in window.key_dict:
                 window["-SHOW_SUCCESS-"].hide_row()
 
-        Interface.move_center(window)
         window.refresh()
 
     window.close()

@@ -169,10 +169,16 @@ class Interface:
         pm = PathManager()
         episode = pm.get_current_episode(self.show)
 
+        # Handle season show vs single folder show
+        if episode.parent.parent != PathManager.TV_PATH:
+            episode_text = episode.parts[-2] + '/' + episode.parts[-1]
+        else:
+            episode_text = episode.stem + episode.suffix
+
         column_layout = [
             [
                 sg.Text("Select an Episode: "),
-                sg.In(episode.stem + episode.suffix, size=(40, 10), enable_events=True, key=f"-SELECT_EPISODE-"),
+                sg.In(episode_text, size=(40, 10), enable_events=True, key=f"-SELECT_EPISODE-"),
                 sg.FileBrowse(initial_folder=episode.parent, key="-EPISODE_SEARCH-")
             ],
             [

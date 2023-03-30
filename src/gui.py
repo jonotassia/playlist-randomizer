@@ -167,12 +167,12 @@ class Interface:
     def show_phase_3(self):
         # Get default value for episode
         pm = PathManager()
-        episode = pm.get_next_episode(self.show)
+        episode = pm.get_current_episode(self.show)
 
         column_layout = [
             [
                 sg.Text("Select an Episode: "),
-                sg.In(episode.stem, size=(40, 10), enable_events=True, key=f"-SELECT_EPISODE-"),
+                sg.In(episode.stem + episode.suffix, size=(40, 10), enable_events=True, key=f"-SELECT_EPISODE-"),
                 sg.FileBrowse(initial_folder=episode.parent)
             ],
             [
@@ -198,7 +198,6 @@ class Interface:
     def import_scheme(self) -> sg.Column:
         """
         Pulls the show and associated frequency for row line in the scheme. This is sorted by index
-        :param scheme: Scheme to pull shows and frequencies from
         :return: Column for use in scheme_layout column
         """
         # Get shows and frequencies

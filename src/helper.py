@@ -122,9 +122,10 @@ class PathManager:
 
         return first_episode
 
-    def get_next_episode(self, show_path: Path) -> Path:
+    def get_current_episode(self, show_path: Path) -> Path:
         """
         Uses the .eps file to search and return the first episode. If .eps file does not exist, find the first episode
+        :param show_path: Path of the show to get current episode for
         """
         eps_file_path: Path = show_path.joinpath(".eps.txt")
 
@@ -136,9 +137,9 @@ class PathManager:
             return first_episode
 
         # Otherwise, get current episode from .eps file
-        next_episode: Path = show_path.joinpath(show_path.joinpath(".eps.txt").read_text())
+        current_episode: Path = show_path.joinpath(show_path.joinpath(".eps.txt").read_text())
 
-        return next_episode
+        return current_episode
 
     def find_next_path(self, search_item: Path, search_path: Path) -> Path:
         """
@@ -162,46 +163,45 @@ class PathManager:
 
         return next_path
 
-    def update_next_episode(self, show_path: Path, episode: Path=None) -> Path:
-        '''
+    def update_current_episode(self, playlist, show_path: Path) -> Path:
+        """
         Returns the current episode for the show. Additionally, updates the .eps file marker for the next episode.
         If it has reached the final episode, resets to previous episode
-        '''
+        """
         import os
 
-        current_episode: Path = self.get_next_episode(show_path)
+        current_episode: Path
         next_episode: Path
         next_season: Path
 
-        # If episode is provided, directly update episode. Otherwise, run the automated update
-        if episode:
-            next_episode = episode
-            self.write_next_episode(episode)
+        try:
+            current_episode = playlist.next_episode_dict[show_path]
+        except KeyError:
+            current_episode = self.get_current_episode(show_path)
 
-        else:
-            # If last episode and folder above is the TV_PATH, return to start of series
-            next_episode = self.find_next_path(current_episode, current_episode.parent)
+        # If last episode and folder above is the TV_PATH, return to start of series
+        next_episode = self.find_next_path(current_episode, current_episode.parent)
 
-            # If no next episode was found, return the current episode
-            if not next_episode:
-                return current_episode
+        # If no next episode was found, return the current episode
+        if not next_episode:
+            return current_episode
 
-            # If folder above directory is not TV_PATH, we assume this directory structure is organized into series
-            # Repeat search in next season
-            if current_episode.parent.parent != self.TV_PATH:
-                if next_episode == self.get_first_episode(current_episode.parent):
-                    next_season = self.find_next_path(current_episode.parent, show_path)
+        # If folder above directory is not TV_PATH, we assume this directory structure is organized into series
+        # Repeat search in next season
+        if current_episode.parent.parent != self.TV_PATH:
+            if next_episode == self.get_first_episode(current_episode.parent):
+                next_season = self.find_next_path(current_episode.parent, show_path)
 
-                    # If no next seaon was found, return the current episode
-                    if not next_season:
-                        return current_episode
+                # If no next seaon was found, return the current episode
+                if not next_season:
+                    return current_episode
 
-                    # If we cannot find the next epsiode in the subsequent season folder, do not change .eps
-                    if os.listdir(next_season):
-                        next_episode = self.get_first_episode(next_season)
+                # If we cannot find the next epsiode in the subsequent season folder, do not change .eps
+                if os.listdir(next_season):
+                    next_episode = self.get_first_episode(next_season)
 
-                    else:
-                        return current_episode
+                else:
+                    return current_episode
 
         return next_episode
 

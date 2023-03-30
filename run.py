@@ -256,7 +256,7 @@ if __name__ == "__main__":
             except FileNotFoundError:
                 interface.error_message("Scheme not found.")
 
-            # Hide the success message from the bottom of the frame when new scheme loaded
+            # Hide the success message from the bottom of the frame
             if "-SCHEME_SUCCESS-" in window.key_dict:
                 window["-SCHEME_SUCCESS-"].hide_row()
 
@@ -280,12 +280,17 @@ if __name__ == "__main__":
                 interface.error_message("Invalid Path.")
                 continue
 
+            # Hide the success message from the bottom of the frame
+            if "-SHOW_SUCCESS-" in window.key_dict:
+                window["-SHOW_SUCCESS-"].hide_row()
+
             # Extend phase 3 rows
             if "-SAVE_SHOW-" not in window.key_dict:
                 window.extend_layout(window["-SHOWS-"], interface.show_phase_3)
             else:
                 # Update select episodes with current path in case it has changed
-                window["-SELECT_EPISODE-"].update(pm.get_next_episode(interface.show).stem)
+                curr_episode = pm.get_current_episode(interface.show)
+                window["-SELECT_EPISODE-"].update(curr_episode.stem + curr_episode.suffix)
 
                 # Unhide phase 3 rows
                 window[f"-SELECT_EPISODE-"].unhide_row()
@@ -296,7 +301,10 @@ if __name__ == "__main__":
             episode = Path(values["-SELECT_EPISODE-"])
             try:
                 if episode.exists():
-                    pm.update_next_episode(interface.show, episode)
+                    pm.write_next_episode(episode)
+                elif interface.show.joinpath(episode).exists():
+                    episode = interface.show.joinpath(episode)
+                    pm.write_next_episode(episode)
                 else:
                     interface.error_message("Invalid Path.")
                     continue
@@ -304,11 +312,21 @@ if __name__ == "__main__":
                 interface.error_message("Invalid Path.")
                 continue
 
+            if "-SHOW_SUCCESS-" not in window.key_dict:
+                window.extend_layout(window["-SHOWS-"], [
+                    [interface.success_message("Show successfully saved.", "-SHOW_SUCCESS-")]])
+            else:
+                window["-SHOW_SUCCESS-"].unhide_row()
+
         elif event == "-DISCARD_SHOW-":
             # Hide all phase 3 rows
             window[f"-SELECT_EPISODE-"].hide_row()
             window["-SAVE_SHOW-"].hide_row()
             window["-DISCARD_SHOW-"].hide_row()
+
+            # Hide the success message from the bottom of the frame
+            if "-SHOW_SUCCESS-" in window.key_dict:
+                window["-SHOW_SUCCESS-"].hide_row()
 
         window.refresh()
 

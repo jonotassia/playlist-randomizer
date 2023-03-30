@@ -7,7 +7,6 @@ from pathlib import Path, WindowsPath
 import pandas as pd
 from tinytag import TinyTag
 import random
-from vlc import Media
 
 
 class Playlist:
@@ -62,11 +61,11 @@ class Playlist:
 
             # Use .eps text file to determine next episode to play
             show_path = pm.TV_PATH.joinpath(selected_show[0])
-            self.next_episode_dict[selected_show] = pm.update_next_episode(show_path)
+            self.next_episode_dict[show_path] = pm.update_current_episode(self, show_path)
 
             # Get duration of video and append to total duration
             try:
-                tag = TinyTag.get(self.next_episode_dict[selected_show].as_posix())
+                tag = TinyTag.get(self.next_episode_dict[show_path].as_posix())
                 queue_length_mins += tag.duration
 
                 # If data not available on video length, add 10 mins to ensure we do not infinite loop
@@ -77,12 +76,11 @@ class Playlist:
                 continue
 
             # Add path to video queue
-            self.add_to_playlist(video=self.next_episode_dict[selected_show], duration=tag.duration)
+            self.add_to_playlist(video=self.next_episode_dict[show_path], duration=tag.duration)
 
     def add_to_playlist(self, video: Path, duration: int) -> None:
         """
         Manages to simultaneous updates of video_queues and playlist backlog file. Adds one video to the queue.
-        :param video_queue: Current playlist queue
         :param video: Video to add
         :param duration: Duration of video
         """
@@ -118,8 +116,17 @@ class Playlist:
 
         return video
 
+    def clear_playlist(self):
+        """
+        Removes all videos from current playlist queue and backlog (.playlist.txt)
+        :return: None
+        """
+        # Clear playlist object
+        self.video_queue = deque()
 
-
+        # Clear .txt file
+        playlist = pd.DataFrame(columns=["video", "duration"])
+        playlist.to_csv(PathManager.TV_PATH.joinpath(".playlist.csv").as_posix())
 
 
 if __name__ == "__main__":

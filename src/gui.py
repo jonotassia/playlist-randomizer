@@ -79,7 +79,7 @@ class Interface:
         column_layout = [
                 [
                     sg.Text("Playlist: "),
-                    sg.Listbox(values=playlist, size=(40, 20), disabled=True, key="-PLAYLIST-")
+                    sg.Listbox(values=playlist, size=(40, 20), disabled=False, key="-VIEW_PLAYLIST-")
                 ],
                 [
                     sg.Button("Launch VLC", enable_events=True, size=(10, 1), key="-LAUNCH_VLC-")
@@ -173,7 +173,7 @@ class Interface:
             [
                 sg.Text("Select an Episode: "),
                 sg.In(episode.stem + episode.suffix, size=(40, 10), enable_events=True, key=f"-SELECT_EPISODE-"),
-                sg.FileBrowse(initial_folder=episode.parent)
+                sg.FileBrowse(initial_folder=episode.parent, key="-EPISODE_SEARCH-")
             ],
             [
                 sg.Button("Save Changes", size=(25, 1), key="-SAVE_SHOW-"),
@@ -207,7 +207,7 @@ class Interface:
                       for k, v in self.scheme.data.to_dict(orient="index").items()]
 
         # Merge into a list of list, then return as column
-        return sg.Column(show_data, size_subsample_width=1, size_subsample_height=1.3, scrollable=True, key=f"-SCHEME_DETAILS-{self.scheme.title.upper()}")
+        return sg.Column(show_data, size_subsample_width=1, size_subsample_height=1.3, scrollable=True, key=f"-SCHEME_DETAILS-{self.scheme.title.upper()}-")
 
     @staticmethod
     def error_message(text):

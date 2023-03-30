@@ -1,9 +1,7 @@
-from src.playlist import Playlist
 from src.scheme import Scheme
 from src.helper import PathManager
 from src.gui import Interface
 
-import subprocess
 import PySimpleGUI as sg
 from pathlib import Path
 
@@ -84,12 +82,29 @@ if __name__ == "__main__":
             except FileNotFoundError:
                 interface.error_message("Invalid Scheme.")
 
+            # Hide rows if path is changed
+            if "-VIEW_PLAYLIST-" in window.key_dict:
+                window["-VIEW_PLAYLIST-"].hide_row()
+                window["-LAUNCH_VLC-"].hide_row()
+
         # Display the current playlist to the user and cascade Launch VLC button if not already expanded
         elif event == "-PL_CONFIRM_PLAYLIST-":
             if values["-VLC_PATH-"] and values["-PL_DURATION-"] and values["-PL_SCHEME_PATH-"]:
-                interface.playlist.generate_playlist(interface.scheme)
+                # Extend layout with phase 3 sections
                 if "-LAUNCH_VLC-" not in window.key_dict:
+                    interface.playlist.generate_playlist(interface.scheme)
                     window.extend_layout(window["-PLAYLIST-"], interface.playlist_phase_3)
+
+                # If path has been changed, update view playlist element and unhide
+                else:
+                    # Clear playlist, then regenerate
+                    interface.playlist.clear_playlist()
+                    interface.playlist.generate_playlist(interface.scheme)
+                    window["-VIEW_PLAYLIST-"].update(values=[vid.stem for vid in interface.playlist.video_queue])
+
+                    # Add components back
+                    window["-VIEW_PLAYLIST-"].unhide_row()
+                    window["-LAUNCH_VLC-"].unhide_row()
 
         # Launch VLC with the current playlist
         elif event == "-LAUNCH_VLC-":
@@ -187,6 +202,8 @@ if __name__ == "__main__":
             # If specific instance of scheme is not already loaded, extend the window with it
             elif f"-SCHEME_DETAILS-{interface.scheme.title.upper()}-" not in window.key_dict:
                 window.extend_layout(window["-SCHEME-"], [[interface.import_scheme()]])
+                window["-SAVE_SCHEME-"].unhide_row()
+                window["-DISCARD_SCHEME-"].unhide_row()
 
             else:
                 # Reset scroll bar
@@ -205,8 +222,10 @@ if __name__ == "__main__":
                 window.extend_layout(window["-SCHEME-"], interface.scheme_phase_4)
 
             # If specific instance of scheme is not already loaded, extend the window with it
-            elif f"-SCHEME_DETAILS-{interface.scheme.title.upper()}" not in window.key_dict:
+            elif f"-SCHEME_DETAILS-{interface.scheme.title.upper()}-" not in window.key_dict:
                 window.extend_layout(window["-SCHEME-"], [[interface.import_scheme()]])
+                window["-SAVE_SCHEME-"].unhide_row()
+                window["-DISCARD_SCHEME-"].unhide_row()
 
             else:
                 # Reset scroll bar
@@ -254,7 +273,10 @@ if __name__ == "__main__":
                 window["-DISCARD_SCHEME-"].hide_row()
 
             except FileNotFoundError:
-                interface.error_message("Scheme not found.")
+                # Hide phase 4 rows
+                window[f"-SCHEME_DETAILS-{interface.scheme.title.upper()}-"].hide_row()
+                window["-SAVE_SCHEME-"].hide_row()
+                window["-DISCARD_SCHEME-"].hide_row()
 
             # Hide the success message from the bottom of the frame
             if "-SCHEME_SUCCESS-" in window.key_dict:

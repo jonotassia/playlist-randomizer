@@ -13,7 +13,8 @@ class Scheme:
     @classmethod
     def new_playlist_scheme(cls, file_name: str):
         # Grab folder name for each video
-        show_folders: list = [folder for folder in PathManager.TV_PATH.glob("*[!.csv]")]
+        show_folders: list = [folder for folder in PathManager.TV_PATH.iterdir()
+                              if folder.suffix != ".csv" and folder.suffix != ".txt"]
 
         # Create and populate dataframe
         show_folder_df: pd.DataFrame = pd.DataFrame(columns=["show_path", "frequency"])

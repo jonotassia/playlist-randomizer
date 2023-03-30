@@ -167,13 +167,18 @@ class Interface:
     def show_phase_3(self):
         # Get default value for episode
         pm = PathManager()
-        episode = pm.get_current_episode(self.show)
 
-        # Handle season show vs single folder show
-        if episode.parent.parent != PathManager.TV_PATH:
-            episode_text = episode.parts[-2] + '/' + episode.parts[-1]
-        else:
-            episode_text = episode.stem + episode.suffix
+        try:
+            episode = pm.get_current_episode(self.show)
+
+            # Handle season show vs single folder show
+            if episode.parent.parent != PathManager.TV_PATH:
+                episode_text = episode.parts[-2] + '/' + episode.parts[-1]
+            else:
+                episode_text = episode.stem + episode.suffix
+        except:
+            episode = Path()
+            episode_text = ""
 
         column_layout = [
             [

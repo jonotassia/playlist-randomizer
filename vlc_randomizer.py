@@ -31,6 +31,10 @@ if __name__ == "__main__":
             try:
                 if tv_path.exists():
                     PathManager.TV_PATH = tv_path
+                    try:
+                        PathManager.TV_PATH.joinpath(".scheme").mkdir()
+                    except FileExistsError:
+                        pass
                 else:
                     interface.error_message("Invalid Path.")
             except OSError:
@@ -202,7 +206,9 @@ if __name__ == "__main__":
         # Cascade scheme editing windows if they are not already expanded.
         elif event == "-CONFIRM_NEW_SCHEME-":
             interface.scheme = Scheme.load_playlist_scheme(values["-NEW_SCHEME_NAME-"])
-            window["-LOAD_SCHEME_NAME-"].update(interface.get_schemes())
+
+            if "-LOAD_SCHEME_NAME-" in window.key_dict:
+                window["-LOAD_SCHEME_NAME-"].update(interface.get_schemes())
 
             if "-SAVE_SCHEME-" not in window.key_dict:
                 window.extend_layout(window["-SCHEME-"], interface.scheme_phase_4)
@@ -326,15 +332,19 @@ if __name__ == "__main__":
                 window.extend_layout(window["-SHOWS-"], interface.show_phase_3)
             else:
                 # Update select episodes with current path in case it has changed
-                curr_episode = pm.get_current_episode(interface.show)
+                try:
+                    curr_episode = pm.get_current_episode(interface.show)
 
-                # Handle season show vs single folder show
-                if curr_episode.parent.parent != PathManager.TV_PATH:
-                    curr_episode_text = curr_episode.parts[-2] + '/' + curr_episode.parts[-1]
-                else:
-                    curr_episode_text = curr_episode.stem + curr_episode.suffix
+                    # Handle season show vs single folder show
+                    if curr_episode.parent.parent != PathManager.TV_PATH:
+                        curr_episode_text = curr_episode.parts[-2] + '/' + curr_episode.parts[-1]
+                    else:
+                        curr_episode_text = curr_episode.stem + curr_episode.suffix
+                except:
+                    curr_episode = Path()
+                    curr_episode_text = ""
 
-                window["-SELECT_EPISODE-"].update(curr_episode.stem + curr_episode.suffix)
+                window["-SELECT_EPISODE-"].update(curr_episode_text)
 
                 # Unhide phase 3 rows
                 window[f"-SELECT_EPISODE-"].unhide_row()

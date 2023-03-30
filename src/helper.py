@@ -94,22 +94,7 @@ class PathManager:
             cls.VLC_PATH = Path("C:/Program Files/VideoLAN/VLC/vlc.exe")
         elif cls.PROG_PATH_86.joinpath("VideoLAN").exists():
             cls.VLC_PATH = Path("C:/Program Files (x86)/VideoLAN/VLC/vlc.exe")
-        else:
-            # Prompt user for VLC Path. Verify that it is a valid path, otherwise, continue loop.
-            while True:
-                input_path = input("Unable to find VLC path. Please enter path: ")
-                input_path = input_path.strip('\"')
 
-                # If blank, quit the programme
-                if input_path == "":
-                    return False
-
-                try:
-                    cls.VLC_PATH = Path(input_path)
-                    if cls.VLC_PATH.exists() and cls.VLC_PATH.stem == "vlc":
-                        break
-                except:
-                    print("Invalid Path")
         return True
 
     def get_first_episode(self, search_path: Path) -> Path:
@@ -120,7 +105,11 @@ class PathManager:
 
         sorted_contents: list = [path for path in search_path.glob("*[!.txt]")]
         PathManager.human_sort(sorted_contents)
-        first_episode: Path = sorted_contents[0]
+
+        try:
+            first_episode: Path = sorted_contents[0]
+        except IndexError as err:
+            raise err
 
         # If the first value of the returned content is a directory, search in that directory
         if first_episode.is_dir():

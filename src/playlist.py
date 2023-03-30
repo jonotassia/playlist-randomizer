@@ -61,7 +61,11 @@ class Playlist:
 
             # Use .eps text file to determine next episode to play
             show_path = pm.TV_PATH.joinpath(selected_show[0])
-            self.next_episode_dict[show_path] = pm.update_current_episode(self, show_path)
+
+            try:
+                self.next_episode_dict[show_path] = pm.update_current_episode(self, show_path)
+            except:
+                continue
 
             # Get duration of video and append to total duration
             try:

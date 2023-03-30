@@ -122,7 +122,7 @@ class PathManager:
 
         return first_episode
 
-    def get_current_episode(self, show_path: Path) -> Path:
+    def get_next_episode(self, show_path: Path) -> Path:
         """
         Uses the .eps file to search and return the first episode. If .eps file does not exist, find the first episode
         """
@@ -136,9 +136,9 @@ class PathManager:
             return first_episode
 
         # Otherwise, get current episode from .eps file
-        current_episode: Path = show_path.joinpath(show_path.joinpath(".eps.txt").read_text())
+        next_episode: Path = show_path.joinpath(show_path.joinpath(".eps.txt").read_text())
 
-        return current_episode
+        return next_episode
 
     def find_next_path(self, search_item: Path, search_path: Path) -> Path:
         """
@@ -151,7 +151,7 @@ class PathManager:
         try:
             path_number: int = sorted_paths.index(search_item)
         except ValueError:
-            return None
+            return
 
         # Grab the next episode if it is not the last episode
         try:
@@ -162,50 +162,65 @@ class PathManager:
 
         return next_path
 
-    def update_next_episode(self, show_path: Path) -> Path:
+    def update_next_episode(self, show_path: Path, episode: Path=None) -> Path:
         '''
         Returns the current episode for the show. Additionally, updates the .eps file marker for the next episode.
         If it has reached the final episode, resets to previous episode
         '''
         import os
 
-        current_episode: Path = self.get_current_episode(show_path)
+        current_episode: Path = self.get_next_episode(show_path)
         next_episode: Path
         next_season: Path
 
-        # If last episode and folder above is the TV_PATH, return to start of series
-        next_episode = self.find_next_path(current_episode, current_episode.parent)
+        # If episode is provided, directly update episode. Otherwise, run the automated update
+        if episode:
+            next_episode = episode
+            self.write_next_episode(episode)
 
-        # If no next episode was found, return the current episode
-        if not next_episode:
-            return current_episode
+        else:
+            # If last episode and folder above is the TV_PATH, return to start of series
+            next_episode = self.find_next_path(current_episode, current_episode.parent)
 
-        write_string = next_episode.stem + next_episode.suffix
+            # If no next episode was found, return the current episode
+            if not next_episode:
+                return current_episode
 
-        # If folder above directory is not TV_PATH, we assume this directory structure is organized into series
-        # Repeat search in next season
-        if current_episode.parent.parent != self.TV_PATH:
-            if next_episode == self.get_first_episode(current_episode.parent):
-                next_season = self.find_next_path(current_episode.parent, show_path)
+            # If folder above directory is not TV_PATH, we assume this directory structure is organized into series
+            # Repeat search in next season
+            if current_episode.parent.parent != self.TV_PATH:
+                if next_episode == self.get_first_episode(current_episode.parent):
+                    next_season = self.find_next_path(current_episode.parent, show_path)
 
-                # If no next seaon was found, return the current episode
-                if not next_season:
-                    return current_episode
+                    # If no next seaon was found, return the current episode
+                    if not next_season:
+                        return current_episode
 
-                # If we cannot find the next epsiode in the subsequent season folder, do not change .eps
-                if os.listdir(next_season):
-                    next_episode = self.get_first_episode(next_season)
+                    # If we cannot find the next epsiode in the subsequent season folder, do not change .eps
+                    if os.listdir(next_season):
+                        next_episode = self.get_first_episode(next_season)
 
-                else:
-                    return current_episode
-
-            write_string = next_episode.parts[-2] + '/' + next_episode.parts[-1]
-
-        # Overwrite .eps file with next episode
-        with open(show_path.joinpath(".eps.txt"), "w") as file:
-            file.write(write_string)
+                    else:
+                        return current_episode
 
         return next_episode
+
+    @staticmethod
+    def write_next_episode(video: Path):
+        """
+        Writes the next video to the .eps file.
+        :param video: Next video in series
+        :return: None
+        """
+        # Overwrite .eps file with next episode
+        if video.parent.parent != PathManager.TV_PATH:
+            write_string = video.parts[-2] + '/' + video.parts[-1]
+            with open(video.parent.parent.joinpath(".eps.txt"), "w") as file:
+                file.write(write_string)
+        else:
+            write_string = video.stem + video.suffix
+            with open(video.parent.joinpath(".eps.txt"), "w") as file:
+                file.write(write_string)
 
 
 if __name__ == "__main__":

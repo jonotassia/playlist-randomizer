@@ -4,12 +4,14 @@ from src.helper import PathManager
 
 import PySimpleGUI as sg
 import subprocess
+from pathlib import Path
 
 
 class Interface:
     def __init__(self):
         self.scheme: Scheme = Scheme("Blank")
         self.playlist: Playlist = Playlist()
+        self.show: Path = Path()
 
     # --------------------- Main Layout ----------------------------
     @property
@@ -20,7 +22,7 @@ class Interface:
                 sg.VSeparator(),
                 sg.Frame('Scheme', self.scheme_phase_1, key="-SCHEME-"),
                 sg.VSeparator(),
-                sg.Frame('Shows', self.show_phase_1, key="-SHOWS")
+                sg.Frame('Shows', self.show_phase_1, key="-SHOWS-")
             ]
         ]
 
@@ -155,7 +157,7 @@ class Interface:
         column_layout = [
             [
                 sg.Text("Select a show/movie: "),
-                sg.Listbox(values=self.get_shows(), enable_events=True, size=(40, 20), key="-SELECT_SHOW-")
+                sg.Listbox(values=self.get_shows(), enable_events=True, size=(40, 10), key="-SELECT_SHOW-")
             ]
         ]
 
@@ -163,15 +165,19 @@ class Interface:
 
     @property
     def show_phase_3(self):
+        # Get default value for episode
+        pm = PathManager()
+        episode = pm.get_next_episode(self.show)
+
         column_layout = [
             [
                 sg.Text("Select an Episode: "),
-                sg.In(size=(25, 1), enable_events=True, key="-SELECT_EPISODE-"),
-                sg.FolderBrowse()
+                sg.In(episode.stem, size=(40, 10), enable_events=True, key=f"-SELECT_EPISODE-"),
+                sg.FileBrowse(initial_folder=episode.parent)
             ],
             [
                 sg.Button("Save Changes", size=(25, 1), key="-SAVE_SHOW-"),
-                sg.Button("Discard", size=(25, 1), key="-DISC_SHOW-")
+                sg.Button("Discard", size=(25, 1), key="-DISCARD_SHOW-")
             ]
         ]
 
@@ -185,6 +191,9 @@ class Interface:
     @staticmethod
     def get_shows() -> list:
         return [show.stem for show in PathManager.TV_PATH.iterdir() if show.is_dir() and show.stem != ".scheme"]
+
+    def get_episodes(self) -> list:
+        return [episode.stem for episode in PathManager.TV_PATH.joinpath(self.show).glob("*[!.txt]")]
 
     def import_scheme(self) -> sg.Column:
         """

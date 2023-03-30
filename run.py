@@ -7,11 +7,11 @@ import subprocess
 import PySimpleGUI as sg
 from pathlib import Path
 
-
 if __name__ == "__main__":
     # Get TV_PATH and VLC_PATH from file
-    PathManager.load_paths()
-    PathManager.set_vlc_path()
+    pm = PathManager()
+    pm.load_paths()
+    pm.set_vlc_path()
 
     interface = Interface()
 
@@ -55,11 +55,8 @@ if __name__ == "__main__":
 
         # If Generate Playlist pressed, cascade related sections if not already cascaded
         elif event == "-GEN_PLAYLIST-":
-            try:
-                if "-VLC_PATH-" not in window.key_dict:
-                    window.extend_layout(window["-PLAYLIST-"], interface.playlist_phase_2)
-            except KeyError:
-                continue
+            if "-VLC_PATH-" not in window.key_dict:
+                window.extend_layout(window["-PLAYLIST-"], interface.playlist_phase_2)
 
         # If VLC_PATH entered, validate and set VLC_PATH variable in PathManager. Otherwise, throw error.
         elif event == "-VLC_PATH-":
@@ -116,7 +113,7 @@ if __name__ == "__main__":
             # Hide phase 4 rows
             if "-SAVE_SCHEME-" in window.key_dict:
                 # Hide phase 4 rows
-                window[f"-SCHEME_DETAILS-{interface.scheme.title.upper()}"].hide_row()
+                window[f"-SCHEME_DETAILS-{interface.scheme.title.upper()}-"].hide_row()
                 window["-SAVE_SCHEME-"].hide_row()
                 window["-DISCARD_SCHEME-"].hide_row()
 
@@ -144,7 +141,7 @@ if __name__ == "__main__":
             # Hide phase 4 rows
             if "-SAVE_SCHEME-" in window.key_dict:
                 # Hide phase 4 rows
-                window[f"-SCHEME_DETAILS-{interface.scheme.title.upper()}"].hide_row()
+                window[f"-SCHEME_DETAILS-{interface.scheme.title.upper()}-"].hide_row()
                 window["-SAVE_SCHEME-"].hide_row()
                 window["-DISCARD_SCHEME-"].hide_row()
 
@@ -161,7 +158,7 @@ if __name__ == "__main__":
         elif event == "-NEW_SCHEME_NAME-":
             if "-SAVE_SCHEME-" in window.key_dict:
                 # Hide phase 4 rows
-                window[f"-SCHEME_DETAILS-{interface.scheme.title.upper()}"].hide_row()
+                window[f"-SCHEME_DETAILS-{interface.scheme.title.upper()}-"].hide_row()
                 window["-SAVE_SCHEME-"].hide_row()
                 window["-DISCARD_SCHEME-"].hide_row()
 
@@ -171,7 +168,7 @@ if __name__ == "__main__":
         elif event == "-LOAD_SCHEME_NAME-":
             if "-SAVE_SCHEME-" in window.key_dict:
                 # Hide phase 4 rows
-                window[f"-SCHEME_DETAILS-{interface.scheme.title.upper()}"].hide_row()
+                window[f"-SCHEME_DETAILS-{interface.scheme.title.upper()}-"].hide_row()
                 window["-SAVE_SCHEME-"].hide_row()
                 window["-DISCARD_SCHEME-"].hide_row()
 
@@ -188,16 +185,16 @@ if __name__ == "__main__":
                 window.extend_layout(window["-SCHEME-"], interface.scheme_phase_4)
 
             # If specific instance of scheme is not already loaded, extend the window with it
-            elif f"-SCHEME_DETAILS-{interface.scheme.title.upper()}" not in window.key_dict:
+            elif f"-SCHEME_DETAILS-{interface.scheme.title.upper()}-" not in window.key_dict:
                 window.extend_layout(window["-SCHEME-"], [[interface.import_scheme()]])
 
             else:
                 # Reset scroll bar
-                window[f"-SCHEME_DETAILS-{interface.scheme.title.upper()}"].contents_changed()
+                window[f"-SCHEME_DETAILS-{interface.scheme.title.upper()}-"].contents_changed()
 
                 # Unhide phase 4 rows
-                if f"-SCHEME_DETAILS-{interface.scheme.title.upper()}" in window.key_dict:
-                    window[f"-SCHEME_DETAILS-{interface.scheme.title.upper()}"].unhide_row()
+                if f"-SCHEME_DETAILS-{interface.scheme.title.upper()}-" in window.key_dict:
+                    window[f"-SCHEME_DETAILS-{interface.scheme.title.upper()}-"].unhide_row()
                 window["-SAVE_SCHEME-"].unhide_row()
                 window["-DISCARD_SCHEME-"].unhide_row()
 
@@ -213,11 +210,11 @@ if __name__ == "__main__":
 
             else:
                 # Reset scroll bar
-                window[f"-SCHEME_DETAILS-{interface.scheme.title.upper()}"].contents_changed()
+                window[f"-SCHEME_DETAILS-{interface.scheme.title.upper()}-"].contents_changed()
 
                 # Unhide phase 4 rows
-                if f"-SCHEME_DETAILS-{interface.scheme.title.upper()}" in window.key_dict:
-                    window[f"-SCHEME_DETAILS-{interface.scheme.title.upper()}"].unhide_row()
+                if f"-SCHEME_DETAILS-{interface.scheme.title.upper()}-" in window.key_dict:
+                    window[f"-SCHEME_DETAILS-{interface.scheme.title.upper()}-"].unhide_row()
                 window["-SAVE_SCHEME-"].unhide_row()
                 window["-DISCARD_SCHEME-"].unhide_row()
 
@@ -234,7 +231,8 @@ if __name__ == "__main__":
 
                 # Cascade success message, or unhide if already there
                 if "-SCHEME_SUCCESS-" not in window.key_dict:
-                    window.extend_layout(window["-SCHEME-"], [[interface.success_message("Scheme successfully saved.", "-SCHEME_SUCCESS-")]])
+                    window.extend_layout(window["-SCHEME-"], [
+                        [interface.success_message("Scheme successfully saved.", "-SCHEME_SUCCESS-")]])
                 else:
                     window["-SCHEME_SUCCESS-"].unhide_row()
 
@@ -251,7 +249,7 @@ if __name__ == "__main__":
                     window[f"-SCHEME_FREQ_{index}-"].update(interface.scheme.data.at[index, "frequency"])
 
                 # Hide phase 4 rows
-                window[f"-SCHEME_DETAILS-{interface.scheme.title.upper()}"].hide_row()
+                window[f"-SCHEME_DETAILS-{interface.scheme.title.upper()}-"].hide_row()
                 window["-SAVE_SCHEME-"].hide_row()
                 window["-DISCARD_SCHEME-"].hide_row()
 
@@ -263,6 +261,54 @@ if __name__ == "__main__":
                 window["-SCHEME_SUCCESS-"].hide_row()
 
         # --------------- Show Layout Event Checks -----------------------
+
+        # If Update Show Marker pressed, cascade related sections if not already cascaded
+        elif event == "-UPDATE_SHOW-":
+            if "-SELECT_SHOW-" not in window.key_dict:
+                window.extend_layout(window["-SHOWS-"], interface.show_phase_2)
+
+        elif event == "-SELECT_SHOW-":
+            # Assign new show to interface
+            show = PathManager.TV_PATH.joinpath(Path(values["-SELECT_SHOW-"][0]))
+            try:
+                if interface.show.exists():
+                    interface.show = show
+                else:
+                    interface.error_message("Invalid Path.")
+                    continue
+            except OSError:
+                interface.error_message("Invalid Path.")
+                continue
+
+            # Extend phase 3 rows
+            if "-SAVE_SHOW-" not in window.key_dict:
+                window.extend_layout(window["-SHOWS-"], interface.show_phase_3)
+            else:
+                # Update select episodes with current path in case it has changed
+                window["-SELECT_EPISODE-"].update(pm.get_next_episode(interface.show).stem)
+
+                # Unhide phase 3 rows
+                window[f"-SELECT_EPISODE-"].unhide_row()
+                window["-SAVE_SHOW-"].unhide_row()
+                window["-DISCARD_SHOW-"].unhide_row()
+
+        elif event == "-SAVE_SHOW-":
+            episode = Path(values["-SELECT_EPISODE-"])
+            try:
+                if episode.exists():
+                    pm.update_next_episode(interface.show, episode)
+                else:
+                    interface.error_message("Invalid Path.")
+                    continue
+            except OSError:
+                interface.error_message("Invalid Path.")
+                continue
+
+        elif event == "-DISCARD_SHOW-":
+            # Hide all phase 3 rows
+            window[f"-SELECT_EPISODE-"].hide_row()
+            window["-SAVE_SHOW-"].hide_row()
+            window["-DISCARD_SHOW-"].hide_row()
 
         window.refresh()
 

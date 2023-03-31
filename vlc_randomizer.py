@@ -18,7 +18,7 @@ if __name__ == "__main__":
 
     # Create event loop
     while True:
-        event, values = window.read(timeout=300)
+        event, values = window.read(timeout=1000)
         # End programme if user closes window
         if event == sg.WIN_CLOSED:
             break
@@ -91,7 +91,7 @@ if __name__ == "__main__":
 
                     # If select show section is loaded, refresh
                     if "-SELECT_SHOW-" in window.key_dict:
-                        window["-SELECT_SHOW-"].update(values=interface.get_shows())
+                        window["-SELECT_SHOW-"].update(values=interface.get_shows(PathManager.TV_PATH))
 
                 else:
                     interface.error_message("Invalid Path.")
@@ -303,7 +303,9 @@ if __name__ == "__main__":
             try:
                 # Incorporate changes to frequency for show to dataframe, then save changes
                 for index in interface.scheme.data.index.values:
-                    interface.scheme.data.at[index, "frequency"] = values[f"-SCHEME_FREQ_{index}-"]
+                    # If value is not entered, fill with a 0
+                    interface.scheme.data.at[index, "frequency"] = values[f"-SCHEME_FREQ_{index}-"] \
+                        if values[f"-SCHEME_FREQ_{index}-"] else 0
                 interface.scheme.save_scheme()
 
                 # If a new scheme was added, make sure it is reflected in the playlist generation screen
@@ -356,9 +358,10 @@ if __name__ == "__main__":
                 continue
 
             # Assign new show to interface
-            show = PathManager.TV_PATH.joinpath(Path(values["-SELECT_SHOW-"][0]))
+            show = PathManager.TV_PATH.joinpath(values["-SELECT_SHOW-"][0]) \
+                if values["-SELECT_SHOW-"][0] != PathManager.TV_PATH.stem else PathManager.TV_PATH
             try:
-                if interface.show.exists():
+                if show.exists():
                     interface.show = show
                 else:
                     interface.error_message("Invalid Path.")

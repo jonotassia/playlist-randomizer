@@ -14,7 +14,7 @@ class Scheme:
     def new_playlist_scheme(cls, file_name: str):
         # Grab folder name for each video
         show_folders: list = [folder for folder in PathManager.TV_PATH.iterdir()
-                              if folder.suffix != ".csv" and folder.suffix != ".txt"]
+                              if folder.suffix not in [".csv", ".txt"]]
 
         # Create and populate dataframe
         show_folder_df: pd.DataFrame = pd.DataFrame(columns=["show_path", "frequency"])
@@ -48,6 +48,10 @@ class Scheme:
         self.data = pd.read_csv(PathManager.TV_PATH.as_posix() + "/.scheme/" + self.title + ".csv", index_col=0)
 
     def save_scheme(self):
+        save_path = PathManager.TV_PATH.joinpath(".scheme")
+        if not save_path.exists():
+            save_path.mkdir()
+
         self.data.to_csv(PathManager.TV_PATH.as_posix() + "/.scheme/" + self.title + ".csv")
 
 

@@ -167,7 +167,7 @@ class Interface:
                 sg.Text("Select a show/movie: ")
             ],
             [
-                sg.Listbox(values=self.get_shows(), enable_events=True, size=(40, 20),
+                sg.Listbox(values=self.get_shows(PathManager.TV_PATH), enable_events=True, size=(40, 20),
                            horizontal_scroll=True, key="-SELECT_SHOW-")
             ],
             [
@@ -210,11 +210,13 @@ class Interface:
         return [scheme.stem for scheme in PathManager.TV_PATH.joinpath(".scheme").glob("*.csv")]
 
     @staticmethod
-    def get_shows() -> list:
-        return [show.stem for show in PathManager.TV_PATH.iterdir() if show.is_dir() and show.stem != ".scheme"]
+    def get_shows(path: Path = PathManager.TV_PATH) -> list:
+        return [PathManager.TV_PATH.stem] + [show.stem for show in path.iterdir() if show.is_dir() and show.stem != ".scheme"]
 
-    def get_episodes(self) -> list:
-        return [episode.stem for episode in PathManager.TV_PATH.joinpath(self.show).glob("*[!.txt]")]
+    @staticmethod
+    def get_episodes(path: Path = PathManager.TV_PATH) -> list:
+        return [episode.stem for episode in path.iterdir()
+                if episode.suffix not in [".csv", ".txt"]]
 
     def import_scheme(self) -> sg.Column:
         """

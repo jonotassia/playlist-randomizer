@@ -61,9 +61,13 @@ class Playlist:
         Returns the first episode of a show. If show is arranged into seasons, searches recursively.
         :param search_path: Path to initiate search for episode
         """
-        # Sort contents of directory, excluding non-media files
-        sorted_contents: list = [path for path in search_path.iterdir() if
-                                 path.suffix not in [".csv", ".txt"] and path.stem != ".scheme"]
+        # Sort contents of directory, excluding non-media files and folders. If the path is TV_PATH, exclude folders too
+        if search_path == PathManager.TV_PATH:
+            sorted_contents: list = [path for path in search_path.iterdir() if
+                                     path.suffix not in [".csv", ".txt"] and path.stem != ".scheme" and not path.is_dir()]
+        else:
+            sorted_contents: list = [path for path in search_path.iterdir() if
+                                     path.suffix not in [".csv", ".txt"] and path.stem != ".scheme"]
 
         self.human_sort(sorted_contents)
 
@@ -108,6 +112,8 @@ class Playlist:
         :param search_item: The target of the search. It will look for the element that is after this one.
         :param search_path: The path of the search.
         """
+        # if the search item is already a media file, search only media files (assumes we are in media folder)
+
         # Search for next episode of show in folder
         sorted_paths: list = [path for path in search_path.iterdir()
                               if path.suffix not in [".csv", ".txt"] and path.stem != ".scheme"]
@@ -123,11 +129,16 @@ class Playlist:
             next_path: Path = sorted_paths[path_number + 1]
 
         except IndexError:
-            next_path: Path = sorted_paths[0]
+            return search_item.parent
 
-        # If we have not reached a media file yet, continue until one is found
-        while next_path.is_dir():
-            next_path = self.find_next_episode(next_path, next_path.parent)
+        # If we have not reached a media file yet, continue until one is found.
+        # Use get_current_episode as your search item
+        if next_path.is_dir():
+            try:
+                next_path = self.find_next_episode(self.get_current_episode(next_path), next_path)
+            # If the file directory is blank, return the previous episode
+            except IndexError:
+                return sorted_paths[path_number]
 
         return next_path
 
@@ -136,23 +147,30 @@ class Playlist:
         Returns the current episode for the show. Additionally, updates the .eps file marker for the next episode.
         If it has reached the final episode, resets to previous episode
         """
-        import os
-
-        current_episode: Path
-        next_episode: Path
+        current_episode: Path = Path()
+        next_episode: Path = Path()
 
         # If the show has already been encountered, use the playlist marker rather than reading from file
         try:
-            current_episode = self.next_episode_dict[show_path]
+            next_episode = self.next_episode_dict[show_path]
         except KeyError:
-            current_episode = self.get_current_episode(show_path)
+            next_episode = self.get_current_episode(show_path) \
+                            if show_path.is_dir() else self.get_current_episode(show_path.parent)
 
-        # If last episode and folder above is the TV_PATH, return to start of series
-        next_episode = self.find_next_episode(current_episode, current_episode.parent)
+        # Search for the next episode of the show if it has already reached the end of the series
+        while True:
+            # If find_next_episode returns a media file, we will return it
+            next_episode = self.find_next_episode(next_episode, next_episode.parent)
 
-        # If no next episode was found, return the current episode
-        if not next_episode:
-            return current_episode
+            # Otherwise, if it returns a directory, go to the next directory
+            if next_episode.is_dir():
+                next_episode = self.find_next_episode(next_episode, next_episode.parent)
+
+                # Then search for the current episode in that folder
+                next_episode = self.get_current_episode(next_episode)
+
+            if next_episode.is_file() or not next_episode:
+                break
 
         return next_episode
 
@@ -290,6 +308,7 @@ class Playlist:
         """
         # Clear playlist object
         self.video_queue = deque()
+        self.next_episode_dict = dict()
 
         # Clear .txt file
         playlist = pd.DataFrame(columns=["video", "duration"])

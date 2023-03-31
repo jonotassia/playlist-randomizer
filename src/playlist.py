@@ -1,22 +1,187 @@
 # Defines the playlist class and its associated methods
-from src.helper import PathManager
 from src.scheme import Scheme
+from src.helper import PathManager
 
 from collections import deque
 from pathlib import Path, WindowsPath
 import pandas as pd
 from tinytag import TinyTag
 import random
+import os
+import re
 
 
 class Playlist:
+    # --------------------- Class Variables -----------------------------
+    PROG_PATH: Path = Path("C:/Program Files/")
+    PROG_PATH_86: Path = Path("C:/Program Files (x86)/")
+    USER_PATH: Path = Path(os.environ['USERPROFILE'])
+    TV_PATH: Path = None
+    VLC_PATH: Path = None
+
     def __init__(self, max_length=200):
         self.video_queue: deque = deque()
         self.length: int
         self.max_length: int = max_length
         self.next_episode_dict: dict = dict()
 
-    # ----------------------- Methods --------------------------------
+    # --------------------- Search Functions ----------------------------
+    @staticmethod
+    def tryint(string: str) -> str:
+        """
+        Return an int if possible, or `s` unchanged.
+        """
+        try:
+            return int(string)
+        except ValueError:
+            return string
+
+    @staticmethod
+    def alphanum_key(string: Path) -> list:
+        """
+        Turn a string into a list of string and number chunks.
+
+        alphanum_key("z23a")
+        ["z", 23, "a"]
+
+        """
+        string = string.as_posix()
+        return [Playlist.tryint(c) for c in re.split('([0-9]+)', string)]
+
+    @staticmethod
+    def human_sort(path_list: list) -> None:
+        """
+        Sort a list in the way that humans expect.
+        """
+        path_list.sort(key=Playlist.alphanum_key)
+
+    # -------------------- Episode Search Functions -----------------------
+    def get_first_episode(self, search_path: Path) -> Path:
+        """
+        Returns the first episode of a show. If show is arranged into seasons, searches recursively.
+        :param search_path: Path to initiate search for episode
+        """
+        # Sort contents of directory, excluding non-media files
+        sorted_contents: list = [path for path in search_path.iterdir() if
+                                 path.suffix not in [".csv", ".txt"] and path.stem != ".scheme"]
+
+        self.human_sort(sorted_contents)
+
+        try:
+            first_episode: Path = sorted_contents[0]
+        except IndexError as err:
+            raise err
+
+        # Write the first episode to file
+        with open(search_path.joinpath(".eps.txt"), "w") as file:
+            file.write(first_episode.as_posix())
+
+        # If the first value of the returned content is a directory, search in that directory
+        if first_episode.is_dir():
+            first_episode = self.get_first_episode(first_episode)
+
+        return first_episode
+
+    def get_current_episode(self, show_path: Path) -> Path:
+        """
+        Uses the .eps file to search and return the first episode. If .eps file does not exist, find the first episode
+        :param show_path: Path of the show to get current episode for
+        """
+        eps_file_path: Path = show_path.joinpath(".eps.txt")
+
+        # If .eps file does not exist, populate with first episode of show and return first episode
+        if not eps_file_path.exists() or not eps_file_path.stat().st_size:
+            first_episode: Path = self.get_first_episode(show_path)
+            return first_episode
+
+        # Otherwise, get current episode from .eps file
+        current_episode: Path = Path(eps_file_path.read_text())
+
+        if current_episode.is_dir():
+            current_episode = self.get_current_episode(current_episode)
+
+        return current_episode
+
+    def find_next_episode(self, search_item: Path, search_path: Path) -> Path:
+        """
+        Searches for the next episode or season. If the final episode or season, returns the first one
+        :param search_item: The target of the search. It will look for the element that is after this one.
+        :param search_path: The path of the search.
+        """
+        # Search for next episode of show in folder
+        sorted_paths: list = [path for path in search_path.iterdir()
+                              if path.suffix not in [".csv", ".txt"] and path.stem != ".scheme"]
+        self.human_sort(sorted_paths)
+
+        try:
+            path_number: int = sorted_paths.index(search_item)
+        except ValueError:
+            return
+
+        # Grab the next episode if it is not the last episode
+        try:
+            next_path: Path = sorted_paths[path_number + 1]
+
+        except IndexError:
+            next_path: Path = sorted_paths[0]
+
+        # If we have not reached a media file yet, continue until one is found
+        while next_path.is_dir():
+            next_path = self.find_next_episode(next_path, next_path.parent)
+
+        return next_path
+
+    def update_current_episode(self, show_path: Path) -> Path:
+        """
+        Returns the current episode for the show. Additionally, updates the .eps file marker for the next episode.
+        If it has reached the final episode, resets to previous episode
+        """
+        import os
+
+        current_episode: Path
+        next_episode: Path
+
+        # If the show has already been encountered, use the playlist marker rather than reading from file
+        try:
+            current_episode = self.next_episode_dict[show_path]
+        except KeyError:
+            current_episode = self.get_current_episode(show_path)
+
+        # If last episode and folder above is the TV_PATH, return to start of series
+        next_episode = self.find_next_episode(current_episode, current_episode.parent)
+
+        # If no next episode was found, return the current episode
+        if not next_episode:
+            return current_episode
+
+        return next_episode
+
+    @staticmethod
+    def write_next_episode(video: Path):
+        """
+        Writes the next video to the .eps file.
+        :param video: Next video in series
+        :return: None
+        """
+        # Overwrite .eps file with next episode
+        with open(video.parent.joinpath(".eps.txt"), "w") as file:
+            file.write(video.as_posix())
+
+    @staticmethod
+    def clear_episode_files(path: Path = PathManager.TV_PATH):
+        """
+        Clears all episode files across TV directory
+        :return: None
+        """
+        # Delete .eps file from directory
+        episode_file = path.joinpath(".eps.txt")
+        if episode_file.exists():
+            episode_file.unlink()
+
+        # Recursively delete .eps file from all lower paths
+        [Playlist.clear_episode_files(folder) for folder in path.iterdir() if folder.is_dir()]
+
+    # -------------------- Playlist Functions -----------------------
     @classmethod
     def load_playlist(cls):
         """
@@ -26,7 +191,8 @@ class Playlist:
         # Otherwise, return the empty playlist and save a blank csv with headers
         try:
             # Load videos and convert videos to path
-            playlist = pd.read_csv(PathManager.TV_PATH.joinpath(".playlist.csv").as_posix(), index_col=0).reset_index(drop=True)
+            playlist = pd.read_csv(PathManager.TV_PATH.joinpath(".playlist.csv").as_posix(), index_col=0).reset_index(
+                drop=True)
             playlist["video"] = playlist["video"].apply(lambda x: WindowsPath(x))
         except:
             playlist = pd.DataFrame(columns=["video", "duration"])
@@ -39,9 +205,6 @@ class Playlist:
         """
         Generates a playlist, adding  up to a maximum number of minutes
         """
-        # Create path manager
-        pm = PathManager()
-
         # Define variables
         queue_length_mins: int = 0
         selected_show: Path
@@ -60,10 +223,10 @@ class Playlist:
                                            weights=playlist_scheme.data["frequency"].to_list())
 
             # Use .eps text file to determine next episode to play
-            show_path = pm.TV_PATH.joinpath(selected_show[0])
+            show_path = PathManager.TV_PATH.joinpath(selected_show[0])
 
             try:
-                self.next_episode_dict[show_path] = pm.update_current_episode(self, show_path)
+                self.next_episode_dict[show_path] = self.update_current_episode(show_path)
             except:
                 continue
 
@@ -76,7 +239,7 @@ class Playlist:
                 if not tag.duration:
                     queue_length_mins += 10
 
-            except FileNotFoundError:
+            except:
                 continue
 
             # Add path to video queue
@@ -113,7 +276,7 @@ class Playlist:
         # Pop and return front of queue. If queue is empty, return None
         try:
             video = self.video_queue.popleft()
-            PathManager.write_next_episode(video)
+            self.write_next_episode(video)
 
         except IndexError:
             video = None

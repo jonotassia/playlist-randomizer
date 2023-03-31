@@ -2,7 +2,7 @@
 from src.helper import PathManager
 
 import pandas as pd
-from pathlib import WindowsPath
+from pathlib import Path
 
 
 class Scheme:
@@ -23,7 +23,7 @@ class Scheme:
 
         # Make relative to TV_PATH and remove playlist row
         show_folder_df["show_path"] = show_folder_df["show_path"].apply(lambda x: x.relative_to(PathManager.TV_PATH))
-        show_folder_df = show_folder_df[show_folder_df["show_path"] != WindowsPath('.scheme')]
+        show_folder_df = show_folder_df[show_folder_df["show_path"] != Path('.scheme')]
 
         return Scheme(file_name, show_folder_df)
 

@@ -1,5 +1,6 @@
 from src.scheme import Scheme
 from src.helper import PathManager
+from src.playlist import Playlist
 from src.gui import Interface
 
 import PySimpleGUI as sg
@@ -7,9 +8,8 @@ from pathlib import Path
 
 if __name__ == "__main__":
     # Get TV_PATH and VLC_PATH from file
-    pm = PathManager()
-    pm.load_paths()
-    pm.set_vlc_path()
+    PathManager.load_paths()
+    PathManager.set_vlc_path()
 
     interface = Interface()
 
@@ -49,7 +49,7 @@ if __name__ == "__main__":
 
                     # If main buttons not yet cascaded, expand them.
                     if "-GEN_PLAYLIST-" not in window.key_dict:
-                        window.size = 1100, 800
+                        window.size = 1200, 800
                         Interface.move_center(window)
                         window.extend_layout(window["-MAIN-"], interface.main_layout)
 
@@ -104,7 +104,6 @@ if __name__ == "__main__":
         elif event == "-GEN_PLAYLIST-":
             if "-VLC_PATH-" not in window.key_dict:
                 window.extend_layout(window["-PLAYLIST-"], interface.playlist_phase_2)
-                Interface.move_center(window)
 
         # If VLC_PATH entered, validate and set VLC_PATH variable in PathManager. Otherwise, throw error.
         elif event == "-VLC_PATH-":
@@ -170,7 +169,6 @@ if __name__ == "__main__":
         elif event == "-MOD_SCHEME-":
             if "-NEW_SCHEME-" not in window.key_dict:
                 window.extend_layout(window["-SCHEME-"], interface.scheme_phase_2)
-                Interface.move_center(window)
 
         # Cascade New Scheme Path section, hiding load scheme if that has already been pressed
         elif event == "-NEW_SCHEME-":
@@ -352,7 +350,6 @@ if __name__ == "__main__":
         elif event == "-UPDATE_SHOW-":
             if "-SELECT_SHOW-" not in window.key_dict:
                 window.extend_layout(window["-SHOWS-"], interface.show_phase_2)
-                Interface.move_center(window)
 
         elif event == "-SELECT_SHOW-":
             if not values["-SELECT_SHOW-"]:
@@ -380,18 +377,14 @@ if __name__ == "__main__":
             else:
                 # Update select episodes with current path in case it has changed
                 try:
-                    curr_episode = pm.get_current_episode(interface.show)
-
-                    # Handle season show vs single folder show
-                    if curr_episode.parent.parent != PathManager.TV_PATH:
-                        curr_episode_text = curr_episode.parts[-2] + '/' + curr_episode.parts[-1]
-                    else:
-                        curr_episode_text = curr_episode.stem + curr_episode.suffix
+                    curr_episode = interface.playlist.get_current_episode(interface.show)
+                    curr_episode_text = curr_episode.stem
                 except:
-                    curr_episode = Path()
+                    episode = Path()
                     curr_episode_text = ""
 
                 window["-SELECT_EPISODE-"].update(curr_episode_text)
+                window.Element('-EPISODE_SEARCH-').InitialFolder = interface.show
 
                 # Unhide phase 3 rows
                 window[f"-SELECT_EPISODE-"].unhide_row()
@@ -402,10 +395,7 @@ if __name__ == "__main__":
             episode = Path(values["-SELECT_EPISODE-"])
             try:
                 if episode.exists():
-                    pm.write_next_episode(episode)
-                elif interface.show.joinpath(episode).exists():
-                    episode = interface.show.joinpath(episode)
-                    pm.write_next_episode(episode)
+                    interface.playlist.write_next_episode(episode)
                 else:
                     interface.error_message("Invalid Path.")
                     continue
@@ -428,6 +418,21 @@ if __name__ == "__main__":
             # Hide the success message from the bottom of the frame
             if "-SHOW_SUCCESS-" in window.key_dict:
                 window["-SHOW_SUCCESS-"].hide_row()
+
+        elif event == "-CLEAR_MARKERS-":
+            if interface.confirm_popup("Are you sure you want to do this? All show progress will be reset."):
+                # Clear all show markers
+                Playlist.clear_episode_files(PathManager.TV_PATH)
+
+                if "-SELECT_EPISODE-" in window.key_dict:
+                    # Hide all phase 3 rows
+                    window[f"-SELECT_EPISODE-"].hide_row()
+                    window["-SAVE_SHOW-"].hide_row()
+                    window["-DISCARD_SHOW-"].hide_row()
+
+                    # Hide the success message from the bottom of the frame
+                    if "-SHOW_SUCCESS-" in window.key_dict:
+                        window["-SHOW_SUCCESS-"].hide_row()
 
         window.refresh()
 

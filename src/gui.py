@@ -169,6 +169,10 @@ class Interface:
             [
                 sg.Listbox(values=self.get_shows(), enable_events=True, size=(40, 20),
                            horizontal_scroll=True, key="-SELECT_SHOW-")
+            ],
+            [
+                sg.Button("Clear All Markers", size=(20, 1), enable_events=True, button_color="red",
+                          key="-CLEAR_MARKERS-")
             ]
         ]
 
@@ -177,29 +181,24 @@ class Interface:
     @property
     def show_phase_3(self):
         # Get default value for episode
-        pm = PathManager()
-
         try:
-            episode = pm.get_current_episode(self.show)
-
-            # Handle season show vs single folder show
-            if episode.parent.parent != PathManager.TV_PATH:
-                episode_text = episode.parts[-2] + '/' + episode.parts[-1]
-            else:
-                episode_text = episode.stem + episode.suffix
+            episode = self.playlist.get_current_episode(self.show)
+            episode_text = episode.stem
         except:
             episode = Path()
             episode_text = ""
 
         column_layout = [
             [
-                sg.Text("Select an Episode: "),
-                sg.In(episode_text, size=(40, 10), enable_events=True, key=f"-SELECT_EPISODE-"),
+                sg.Text("Select an Episode: ")
+            ],
+            [
+                sg.In(episode_text, size=(35, 10), enable_events=True, key=f"-SELECT_EPISODE-"),
                 sg.FileBrowse(initial_folder=episode.parent, key="-EPISODE_SEARCH-")
             ],
             [
-                sg.Button("Save Changes", size=(25, 1), key="-SAVE_SHOW-"),
-                sg.Button("Discard", size=(25, 1), key="-DISCARD_SHOW-")
+                sg.Button("Save Changes", size=(10, 1), key="-SAVE_SHOW-"),
+                sg.Button("Discard", size=(10, 1), key="-DISCARD_SHOW-")
             ]
         ]
 
@@ -229,10 +228,10 @@ class Interface:
                       for k, v in self.scheme.data.to_dict(orient="index").items()]
 
         # Merge into a list of list, then return as column
-        return sg.Column(show_data, size=(290, 500), scrollable=True, key=f"-SCHEME_DETAILS-{self.scheme.title.upper()}-")
+        return sg.Column(show_data, size=(290, 400), scrollable=True, key=f"-SCHEME_DETAILS-{self.scheme.title.upper()}-")
 
     @staticmethod
-    def error_message(text):
+    def error_message(text: str):
         """
         Used to generate an error window if something is entered incorrectly
         :param text: Error message to display to user
@@ -257,6 +256,40 @@ class Interface:
         :return: None
         """
         return sg.Text(text, text_color="green", key=key)
+
+    @staticmethod
+    def confirm_popup(text: str):
+        """
+        Creates a pop-up window for user to confirm action
+        :param text: Message to display to user
+        :return: Returns true if yes is clicked and false if no
+        """
+        window = sg.Window("Error", layout=[
+            [
+                sg.Text(text)
+            ],
+            [
+                sg.Button("Yes", button_color="green", key="-YES-"),
+                sg.Button("No", button_color="red", key="-NO-")
+            ]
+        ])
+
+        while True:
+            event, values = window.read()
+            # End programme if user closes window
+            if event == sg.WIN_CLOSED:
+                break
+
+            if event == "-YES-":
+                window.close()
+                return True
+
+            if event == "-NO-":
+                break
+
+        window.close()
+
+        return False
 
     def run_playlist(self):
         """

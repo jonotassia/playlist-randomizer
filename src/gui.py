@@ -18,11 +18,11 @@ class Interface:
     def main_layout(self):
         layout = [
             [
-                sg.Frame('Playlist', self.playlist_phase_1, key="-PLAYLIST-"),
+                sg.Frame('Playlist', self.playlist_phase_1, size=(350, 800), expand_x=True, key="-PLAYLIST-"),
                 sg.VSeparator(),
-                sg.Frame('Scheme', self.scheme_phase_1, key="-SCHEME-"),
+                sg.Frame('Scheme', self.scheme_phase_1, size=(350, 800), expand_x=True, key="-SCHEME-"),
                 sg.VSeparator(),
-                sg.Frame('Shows', self.show_phase_1, key="-SHOWS-")
+                sg.Frame('Shows', self.show_phase_1, size=(350, 800), expand_x=True, key="-SHOWS-")
             ]
         ]
 
@@ -62,8 +62,11 @@ class Interface:
                 sg.In(size=(25, 1), default_text="200", enable_events=True, key="-PL_DURATION-"),
             ],
             [
-                sg.Text("Scheme: "),
-                sg.Listbox(values=self.get_schemes(), enable_events=True, size=(40, 5), key="-PL_SCHEME_PATH-"),
+                sg.Text("Scheme: ")
+            ],
+            [
+                sg.Listbox(values=self.get_schemes(), size=(40, 5), enable_events=True,
+                           horizontal_scroll=True,  key="-PL_SCHEME_PATH-")
             ],
             [
                 sg.Button("Confirm", size=(25, 1), enable_events=True, key="-PL_CONFIRM_PLAYLIST-"),
@@ -78,8 +81,10 @@ class Interface:
 
         column_layout = [
                 [
-                    sg.Text("Playlist: "),
-                    sg.Listbox(values=playlist, size=(40, 20), disabled=False, key="-VIEW_PLAYLIST-")
+                    sg.Text("Playlist: ")
+                ],
+                [
+                    sg.Listbox(values=playlist, size=(40, 20), horizontal_scroll=True, disabled=False, key="-VIEW_PLAYLIST-")
                 ],
                 [
                     sg.Button("Launch VLC", enable_events=True, size=(10, 1), key="-LAUNCH_VLC-")
@@ -108,7 +113,7 @@ class Interface:
     def scheme_phase_3_new(self):
         column_layout = [
             [
-                sg.Text("Scheme Path: "),
+                sg.Text("Scheme Name: "),
                 sg.In(size=(25, 1), enable_events=True, key="-NEW_SCHEME_NAME-"),
             ],
             [
@@ -122,8 +127,11 @@ class Interface:
     def scheme_phase_3_load(self):
         column_layout = [
             [
-                sg.Text("Scheme: "),
-                sg.Listbox(values=self.get_schemes(), enable_events=True, size=(40, 5), key="-LOAD_SCHEME_NAME-"),
+                sg.Text("Scheme: ")
+            ],
+            [
+                sg.Listbox(values=self.get_schemes(), size=(40, 5), enable_events=True,
+                           horizontal_scroll=True, key="-LOAD_SCHEME_NAME-"),
             ],
             [
                 sg.Button("Confirm", size=(20, 1), enable_events=True, key="-CONFIRM_LOAD_SCHEME-")
@@ -156,8 +164,11 @@ class Interface:
         # Loop through shows in tv directory. Add to list unless .scheme folder or not directory
         column_layout = [
             [
-                sg.Text("Select a show/movie: "),
-                sg.Listbox(values=self.get_shows(), enable_events=True, size=(40, 10), key="-SELECT_SHOW-")
+                sg.Text("Select a show/movie: ")
+            ],
+            [
+                sg.Listbox(values=self.get_shows(), enable_events=True, size=(40, 20),
+                           horizontal_scroll=True, key="-SELECT_SHOW-")
             ]
         ]
 
@@ -184,7 +195,7 @@ class Interface:
             [
                 sg.Text("Select an Episode: "),
                 sg.In(episode_text, size=(40, 10), enable_events=True, key=f"-SELECT_EPISODE-"),
-                sg.FileBrowse(file_types=("*.exe"), initial_folder=episode.parent, key="-EPISODE_SEARCH-")
+                sg.FileBrowse(initial_folder=episode.parent, key="-EPISODE_SEARCH-")
             ],
             [
                 sg.Button("Save Changes", size=(25, 1), key="-SAVE_SHOW-"),
@@ -218,7 +229,7 @@ class Interface:
                       for k, v in self.scheme.data.to_dict(orient="index").items()]
 
         # Merge into a list of list, then return as column
-        return sg.Column(show_data, size_subsample_width=1, size_subsample_height=1.3, scrollable=True, key=f"-SCHEME_DETAILS-{self.scheme.title.upper()}-")
+        return sg.Column(show_data, size=(290, 500), scrollable=True, key=f"-SCHEME_DETAILS-{self.scheme.title.upper()}-")
 
     @staticmethod
     def error_message(text):

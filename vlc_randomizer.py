@@ -46,10 +46,53 @@ if __name__ == "__main__":
             try:
                 if tv_path.exists():
                     PathManager.TV_PATH = tv_path
+
+                    # If main buttons not yet cascaded, expand them.
                     if "-GEN_PLAYLIST-" not in window.key_dict:
-                        window.set_min_size((800, 800))
+                        window.size = 1100, 800
                         Interface.move_center(window)
                         window.extend_layout(window["-MAIN-"], interface.main_layout)
+
+                    # If any other buttons have been expanded that require scheme or show selection,
+                    # reload data and hide subsequent elements
+
+                    # Reset scheme select box for playlist
+                    if "-PL_SCHEME_PATH-" in window.key_dict:
+                        window["-PL_SCHEME_PATH-"].update(values=interface.get_schemes())
+
+                    # Hide playlist sections after scheme selection
+                    if "-VIEW_PLAYLIST-" in window.key_dict:
+                        window["-VIEW_PLAYLIST-"].hide_row()
+                        window["-LAUNCH_VLC-"].hide_row()
+
+                    # Reload schemes from new TV Path
+                    if "-LOAD_SCHEME_NAME-" in window.key_dict:
+                        window["-LOAD_SCHEME_NAME-"].update(values=interface.get_schemes())
+
+                    # Hide Scheme info
+                    if f"-SCHEME_DETAILS-{interface.scheme.title.upper()}-" in window.key_dict:
+                        window[f"-SCHEME_DETAILS-{interface.scheme.title.upper()}-"].hide_row()
+                        window["-SAVE_SCHEME-"].hide_row()
+                        window["-DISCARD_SCHEME-"].hide_row()
+
+                    # Hide scheme save success message
+                    if "-SCHEME_SUCCESS-" in window.key_dict:
+                        window["-SCHEME_SUCCESS-"].hide_row()
+
+                    # Hide episoode sections
+                    if "-SELECT_EPISODE-" in window.key_dict:
+                        window[f"-SELECT_EPISODE-"].hide_row()
+                        window["-SAVE_SHOW-"].hide_row()
+                        window["-DISCARD_SHOW-"].hide_row()
+
+                    # Hide the episode save success message
+                    if "-SHOW_SUCCESS-" in window.key_dict:
+                        window["-SHOW_SUCCESS-"].hide_row()
+
+                    # If select show section is loaded, refresh
+                    if "-SELECT_SHOW-" in window.key_dict:
+                        window["-SELECT_SHOW-"].update(values=interface.get_shows())
+
                 else:
                     interface.error_message("Invalid Path.")
             except OSError:
@@ -182,7 +225,7 @@ if __name__ == "__main__":
                 window["-CONFIRM_LOAD_SCHEME-"].unhide_row()
 
         elif event == "-NEW_SCHEME_NAME-":
-            if "-SAVE_SCHEME-" in window.key_dict:
+            if f"-SCHEME_DETAILS-{interface.scheme.title.upper()}-" in window.key_dict:
                 # Hide phase 4 rows
                 window[f"-SCHEME_DETAILS-{interface.scheme.title.upper()}-"].hide_row()
                 window["-SAVE_SCHEME-"].hide_row()
@@ -192,7 +235,7 @@ if __name__ == "__main__":
                     window["-SCHEME_SUCCESS-"].hide_row()
 
         elif event == "-LOAD_SCHEME_NAME-":
-            if "-SAVE_SCHEME-" in window.key_dict:
+            if f"-SCHEME_DETAILS-{interface.scheme.title.upper()}-" in window.key_dict:
                 # Hide phase 4 rows
                 window[f"-SCHEME_DETAILS-{interface.scheme.title.upper()}-"].hide_row()
                 window["-SAVE_SCHEME-"].hide_row()
@@ -264,6 +307,10 @@ if __name__ == "__main__":
                 for index in interface.scheme.data.index.values:
                     interface.scheme.data.at[index, "frequency"] = values[f"-SCHEME_FREQ_{index}-"]
                 interface.scheme.save_scheme()
+
+                # If a new scheme was added, make sure it is reflected in the playlist generation screen
+                if "-PL_SCHEME_PATH-" in window.key_dict:
+                    window["-PL_SCHEME_PATH-"].update(interface.get_schemes())
 
                 # Cascade success message, or unhide if already there
                 if "-SCHEME_SUCCESS-" not in window.key_dict:

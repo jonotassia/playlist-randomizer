@@ -1,6 +1,7 @@
 from src.scheme import Scheme
 from src.playlist import Playlist
 from src.helper import PathManager
+from src.show import Show
 
 import PySimpleGUI as sg
 import subprocess
@@ -11,7 +12,7 @@ class Interface:
     def __init__(self):
         self.scheme: Scheme = Scheme("Blank")
         self.playlist: Playlist = Playlist()
-        self.show: Path = Path()
+        self.show: Show = None
 
     # --------------------- Main Layout ----------------------------
     @property
@@ -167,8 +168,12 @@ class Interface:
                 sg.Text("Select a show/movie: ")
             ],
             [
-                sg.Listbox(values=self.get_shows(), enable_events=True, size=(40, 20),
+                sg.Listbox(values=self.get_shows(PathManager.TV_PATH), enable_events=True, size=(40, 20),
                            horizontal_scroll=True, key="-SELECT_SHOW-")
+            ],
+            [
+                sg.Button("Clear All Markers", size=(20, 1), enable_events=True, button_color="red",
+                          key="-CLEAR_MARKERS-")
             ]
         ]
 
@@ -177,29 +182,25 @@ class Interface:
     @property
     def show_phase_3(self):
         # Get default value for episode
-        pm = PathManager()
-
         try:
-            episode = pm.get_current_episode(self.show)
+            episode = self.show.get_current_episode(self.show.path)
+            episode_text = episode.stem
 
-            # Handle season show vs single folder show
-            if episode.parent.parent != PathManager.TV_PATH:
-                episode_text = episode.parts[-2] + '/' + episode.parts[-1]
-            else:
-                episode_text = episode.stem + episode.suffix
         except:
             episode = Path()
             episode_text = ""
 
         column_layout = [
             [
-                sg.Text("Select an Episode: "),
-                sg.In(episode_text, size=(40, 10), enable_events=True, key=f"-SELECT_EPISODE-"),
+                sg.Text("Select an Episode: ")
+            ],
+            [
+                sg.In(episode_text, size=(35, 10), enable_events=True, key=f"-SELECT_EPISODE-"),
                 sg.FileBrowse(initial_folder=episode.parent, key="-EPISODE_SEARCH-")
             ],
             [
-                sg.Button("Save Changes", size=(25, 1), key="-SAVE_SHOW-"),
-                sg.Button("Discard", size=(25, 1), key="-DISCARD_SHOW-")
+                sg.Button("Save Changes", size=(10, 1), key="-SAVE_SHOW-"),
+                sg.Button("Discard", size=(10, 1), key="-DISCARD_SHOW-")
             ]
         ]
 
@@ -211,11 +212,13 @@ class Interface:
         return [scheme.stem for scheme in PathManager.TV_PATH.joinpath(".scheme").glob("*.csv")]
 
     @staticmethod
-    def get_shows() -> list:
-        return [show.stem for show in PathManager.TV_PATH.iterdir() if show.is_dir() and show.stem != ".scheme"]
+    def get_shows(path: Path = PathManager.TV_PATH) -> list:
+        return [PathManager.TV_PATH.stem] + [show.stem for show in path.iterdir() if show.is_dir() and show.stem != ".scheme"]
 
-    def get_episodes(self) -> list:
-        return [episode.stem for episode in PathManager.TV_PATH.joinpath(self.show).glob("*[!.txt]")]
+    @staticmethod
+    def get_episodes(path: Path = PathManager.TV_PATH) -> list:
+        return [episode.stem for episode in path.iterdir()
+                if episode.suffix not in [".csv", ".txt"]]
 
     def import_scheme(self) -> sg.Column:
         """
@@ -229,10 +232,10 @@ class Interface:
                       for k, v in self.scheme.data.to_dict(orient="index").items()]
 
         # Merge into a list of list, then return as column
-        return sg.Column(show_data, size=(290, 500), scrollable=True, key=f"-SCHEME_DETAILS-{self.scheme.title.upper()}-")
+        return sg.Column(show_data, size=(290, 400), scrollable=True, key=f"-SCHEME_DETAILS-{self.scheme.title.upper()}-")
 
     @staticmethod
-    def error_message(text):
+    def error_message(text: str):
         """
         Used to generate an error window if something is entered incorrectly
         :param text: Error message to display to user
@@ -257,6 +260,40 @@ class Interface:
         :return: None
         """
         return sg.Text(text, text_color="green", key=key)
+
+    @staticmethod
+    def confirm_popup(text: str):
+        """
+        Creates a pop-up window for user to confirm action
+        :param text: Message to display to user
+        :return: Returns true if yes is clicked and false if no
+        """
+        window = sg.Window("Error", layout=[
+            [
+                sg.Text(text)
+            ],
+            [
+                sg.Button("Yes", button_color="green", key="-YES-"),
+                sg.Button("No", button_color="red", key="-NO-")
+            ]
+        ])
+
+        while True:
+            event, values = window.read()
+            # End programme if user closes window
+            if event == sg.WIN_CLOSED:
+                break
+
+            if event == "-YES-":
+                window.close()
+                return True
+
+            if event == "-NO-":
+                break
+
+        window.close()
+
+        return False
 
     def run_playlist(self):
         """

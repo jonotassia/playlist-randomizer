@@ -9,16 +9,18 @@ import re
 
 
 class Show:
-    def __init__(self, show_path: Path, episode_path=Path()):
-        self.path: Path = show_path
+    def __init__(self, show_path: Path, episode_path: Path = None, depth: int = 0):
+        if show_path.is_file():
+            self.path: Path = show_path.parent
+        else:
+            self.path: Path = show_path
 
         # Current episode details. Depth stored to facilitate finding next episode if end of directory reached
+        self.episode_depth: int = depth
         try:
-            self._current_episode: Path = episode_path
+            self.current_episode: Path = episode_path
         except ValueError:
-            self.current_episode = self.get_first_episode(self.path)
-
-        self.episode_depth: int = 0
+            self.current_episode = self.get_current_episode(self.path)
 
     # --------------------- Search Functions ----------------------------
     @staticmethod
@@ -53,7 +55,10 @@ class Show:
     # -------------------- Show Properties --------------------------------
     @property
     def current_episode(self):
-        return self.get_current_episode(self.path)
+        try:
+            return self._current_episode
+        except AttributeError:
+            return Path()
 
     @current_episode.setter
     def current_episode(self, value: Path):
@@ -66,7 +71,7 @@ class Show:
 
     @property
     def episode_duration(self):
-        tag = TinyTag.get(self.path.as_posix())
+        tag = TinyTag.get(self.current_episode.as_posix())
 
         if tag.duration:
             return tag.duration
@@ -119,8 +124,8 @@ class Show:
         Uses the .eps file to search and return the first episode. If .eps file does not exist, find the first episode
         :param show_path: Path of the show to get current episode for
         """
-        if self.current_episode:
-            return self._current_episode
+        if self.current_episode.exists() and self.current_episode.is_file():
+            return self.current_episode
 
         eps_file_path: Path = show_path.joinpath(".eps.txt")
 
@@ -168,9 +173,10 @@ class Show:
             next_path: Path = sorted_paths[path_number + 1]
 
         # If final episode in the folder, move up a folder and repeat same search.
-        # If we arrive in the tv path folder, return the first episode of the show
+        # If we arrive in the tv path folder, return the first episode of the show and reset the episode depth
         except IndexError:
-            if search_path == PathManager.TV_PATH:
+            if self.episode_depth-1 <= 0:
+                self.episode_depth = 0
                 return self.get_first_episode(self.path, write=False)
 
             self.episode_depth -= 1
@@ -182,8 +188,9 @@ class Show:
         if next_path.is_dir():
             try:
                 next_path = self.get_first_episode(next_path)
-            # If the file directory is blank, return the previous episode
+            # If the file directory is blank, increment the depth counter and return the previous episode
             except IndexError:
+                self.episode_depth -= 1
                 return sorted_paths[path_number]
 
         return next_path

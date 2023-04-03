@@ -183,7 +183,7 @@ class Interface:
     def show_phase_3(self):
         # Get default value for episode
         try:
-            episode = self.show.current_episode
+            episode = self.show.get_current_episode(self.show.path)
             episode_text = episode.stem
 
         except:

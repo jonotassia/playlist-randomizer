@@ -13,6 +13,8 @@ class Playlist:
         self.video_queue: deque = deque()
         self.length: int
         self.max_length: int = max_length
+
+        # This dictionary will take a show path as a key and return a list with an episode and duration in a list
         self.next_episode_dict: dict = {}
 
     # -------------------- Episode Search Functions -----------------------
@@ -23,7 +25,10 @@ class Playlist:
         """
         # If the show has already been encountered, use the playlist marker rather than reading from file
         try:
-            show: Show = Show(show_path, self.next_episode_dict[show_path])
+            show: Show = Show(show_path,
+                              self.next_episode_dict[show_path][0],
+                              self.next_episode_dict[show_path][1]
+                              )
         except KeyError:
             show: Show = Show(show_path)
 
@@ -53,12 +58,14 @@ class Playlist:
             # Get the next episode of the show
             show = self.get_next_episode(show_path)
 
+            # TODO: Figure out how to ignore movies that have 0 frequency
+
             # Get duration of video and append to total duration
             queue_length_mins += show.episode_duration
 
-            # Add path to video queue and add it to list of shows show episode dict
-            self.video_queue.append(show.path)
-            self.next_episode_dict[show_path] = show.current_episode
+            # Add path to video queue and add it to the show episode dict
+            self.video_queue.append(show.current_episode)
+            self.next_episode_dict[show_path] = [show.current_episode, show.episode_depth]
 
     def dequeue_playlist(self) -> Path:
         """
@@ -66,14 +73,17 @@ class Playlist:
         """
         # Pop and return front of queue. If queue is empty, return None
         try:
-            video = self.video_queue.popleft()
+            video: Path = self.video_queue.popleft()
 
             # Set start point for iteratively setting .eps file through directory
             path = video
 
-            while path != PathManager.TV_PATH:
-                path = path.parent
+            # Get limiter to stop shows from saving over .eps file in TV_PATH
+            show_directories = [path for path in PathManager.TV_PATH.iterdir() if path.is_dir()]
+
+            while path != PathManager.TV_PATH and path not in show_directories:
                 Show.write_next_episode(path)
+                path = path.parent
 
         except IndexError:
             video = None

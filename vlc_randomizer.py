@@ -314,6 +314,9 @@ if __name__ == "__main__":
                 if "-PL_SCHEME_PATH-" in window.key_dict:
                     window["-PL_SCHEME_PATH-"].update(interface.get_schemes())
 
+                if "-LOAD_SCHEME_NAME-" in window.key_dict:
+                    window["-LOAD_SCHEME_NAME-"].update(interface.get_schemes())
+
                 # Cascade success message, or unhide if already there
                 if "-SCHEME_SUCCESS-" not in window.key_dict:
                     window.extend_layout(window["-SCHEME-"], [
@@ -382,7 +385,7 @@ if __name__ == "__main__":
             else:
                 # Update select episodes with current path in case it has changed
                 try:
-                    curr_episode = interface.show.current_episode
+                    curr_episode = interface.show.get_current_episode(interface.show.path)
                     curr_episode_text = curr_episode.stem
                 except:
                     episode = Path()

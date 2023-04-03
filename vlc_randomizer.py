@@ -6,6 +6,8 @@ from src.gui import Interface
 import PySimpleGUI as sg
 from pathlib import Path
 
+from src.show import Show
+
 if __name__ == "__main__":
     # Get TV_PATH and VLC_PATH from file
     PathManager.load_paths()
@@ -358,11 +360,12 @@ if __name__ == "__main__":
                 continue
 
             # Assign new show to interface
-            show = PathManager.TV_PATH.joinpath(values["-SELECT_SHOW-"][0]) \
+            show_path = PathManager.TV_PATH.joinpath(values["-SELECT_SHOW-"][0]) \
                 if values["-SELECT_SHOW-"][0] != PathManager.TV_PATH.stem else PathManager.TV_PATH
             try:
-                if show.exists():
-                    interface.show = show
+                if show_path.exists():
+                    interface.show = show_path
+                    show = Show(show_path)
                 else:
                     interface.error_message("Invalid Path.")
                     continue
@@ -380,7 +383,7 @@ if __name__ == "__main__":
             else:
                 # Update select episodes with current path in case it has changed
                 try:
-                    curr_episode = interface.playlist.get_current_episode(interface.show)
+                    curr_episode = show.get_current_episode(interface.show)
                     curr_episode_text = curr_episode.stem
                 except:
                     episode = Path()

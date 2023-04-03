@@ -1,4 +1,6 @@
 # From src
+from tinytag import TinyTag
+
 from src.helper import PathManager
 
 # From libraries
@@ -7,15 +9,16 @@ import re
 
 
 class Show:
-    def __init__(self, show_path: Path):
+    def __init__(self, show_path: Path, episode_path=Path()):
         self.path: Path = show_path
 
         # Current episode details. Depth stored to facilitate finding next episode if end of directory reached
-        self._current_episode: Path = self.get_current_episode(self.path)
-        self.episode_depth: int = 0
+        try:
+            self._current_episode: Path = episode_path
+        except ValueError:
+            self.current_episode = self.get_first_episode(self.path)
 
-        # Show excavation. Maps the contents of the show folder
-        self._max_depth: int = 0
+        self.episode_depth: int = 0
 
     # --------------------- Search Functions ----------------------------
     @staticmethod
@@ -49,26 +52,36 @@ class Show:
 
     # -------------------- Show Properties --------------------------------
     @property
-    def show_contents(self):
-        return self.build_directory_tree()
-
-    @property
     def current_episode(self):
         return self.get_current_episode(self.path)
 
     @current_episode.setter
     def current_episode(self, value: Path):
         if isinstance(value, Path):
-            self._current_episode = value
+            if value.exists() and value.is_file():
+                self._current_episode = value
 
         else:
             raise ValueError("Invalid Path.")
+
+    @property
+    def episode_duration(self):
+        tag = TinyTag.get(self.path.as_posix())
+
+        if tag.duration:
+            return tag.duration
+
+        # If data not available on video length, add 10 mins to ensure we do not infinite loop
+        else:
+            return 10
 
     # -------------------- Episode Search Functions -----------------------
 
     def get_first_episode(self, search_path: Path, write=True) -> Path:
         """
         Returns the first episode of a show. If show is arranged into seasons, searches recursively.
+        :param write: Typically, this is only false in order to preserve previous episodes in the instance
+        that a user does not load Playlist into VLC media player. This will also be written again when loading into VLC.
         :param search_path: Path to initiate search for episode
         """
         # Sort contents of directory, excluding non-media files and folders. If the path is TV_PATH, exclude folders too
@@ -88,8 +101,7 @@ class Show:
             raise err
 
         # Write the first episode to file if write is true.
-        # Typically, this is only false in order to preserve previous episodes in the instance that a user does not load
-        # Playlist into VLC media player. This will also be written again when loading into VLC.
+
         if write:
             self.write_next_episode(first_episode)
 

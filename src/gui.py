@@ -1,6 +1,7 @@
 from src.scheme import Scheme
 from src.playlist import Playlist
 from src.helper import PathManager
+from src.show import Show
 
 import PySimpleGUI as sg
 import subprocess
@@ -182,8 +183,10 @@ class Interface:
     def show_phase_3(self):
         # Get default value for episode
         try:
-            episode = self.playlist.get_current_episode(self.show)
+            show = Show(self.show)
+            episode = show.get_current_episode(self.show)
             episode_text = episode.stem
+
         except:
             episode = Path()
             episode_text = ""

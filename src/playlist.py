@@ -57,17 +57,8 @@ class Playlist:
             queue_length_mins += show.episode_duration
 
             # Add path to video queue and add it to list of shows show episode dict
-            self.add_to_playlist(video=self.next_episode_dict[show_path])
+            self.video_queue.append(show.path)
             self.next_episode_dict[show_path] = show.current_episode
-
-    def add_to_playlist(self, video: Path) -> None:
-        """
-        Manages to simultaneous updates of video_queues and playlist backlog file. Adds one video to the queue.
-        :param video: Video to add
-        :param duration: Duration of video
-        """
-        # Add to video queue
-        self.video_queue.append(video)
 
     def dequeue_playlist(self) -> Path:
         """

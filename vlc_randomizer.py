@@ -364,8 +364,7 @@ if __name__ == "__main__":
                 if values["-SELECT_SHOW-"][0] != PathManager.TV_PATH.stem else PathManager.TV_PATH
             try:
                 if show_path.exists():
-                    interface.show = show_path
-                    show = Show(show_path)
+                    interface.show = Show(show_path)
                 else:
                     interface.error_message("Invalid Path.")
                     continue
@@ -383,7 +382,7 @@ if __name__ == "__main__":
             else:
                 # Update select episodes with current path in case it has changed
                 try:
-                    curr_episode = show.get_current_episode(interface.show)
+                    curr_episode = interface.show.current_episode
                     curr_episode_text = curr_episode.stem
                 except:
                     episode = Path()
@@ -401,7 +400,7 @@ if __name__ == "__main__":
             episode = Path(values["-SELECT_EPISODE-"])
             try:
                 if episode.exists():
-                    interface.playlist.write_next_episode(episode)
+                    interface.show.write_next_episode(episode)
                 else:
                     interface.error_message("Invalid Path.")
                     continue
@@ -428,7 +427,7 @@ if __name__ == "__main__":
         elif event == "-CLEAR_MARKERS-":
             if interface.confirm_popup("Are you sure you want to do this? All show progress will be reset."):
                 # Clear all show markers
-                Playlist.clear_episode_files(PathManager.TV_PATH)
+                Show.clear_episode_files(PathManager.TV_PATH)
 
                 if "-SELECT_EPISODE-" in window.key_dict:
                     # Hide all phase 3 rows

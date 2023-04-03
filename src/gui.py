@@ -12,7 +12,7 @@ class Interface:
     def __init__(self):
         self.scheme: Scheme = Scheme("Blank")
         self.playlist: Playlist = Playlist()
-        self.show: Path = Path()
+        self.show: Show = None
 
     # --------------------- Main Layout ----------------------------
     @property
@@ -183,8 +183,7 @@ class Interface:
     def show_phase_3(self):
         # Get default value for episode
         try:
-            show = Show(self.show)
-            episode = show.get_current_episode(self.show)
+            episode = self.show.current_episode
             episode_text = episode.stem
 
         except:

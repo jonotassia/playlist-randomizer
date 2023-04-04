@@ -206,19 +206,20 @@ class Interface:
 
         return column_layout
 
-    # ---------------------------- Additional Methods --------------------------
-    @staticmethod
-    def get_schemes() -> list:
-        return [scheme.stem for scheme in PathManager.TV_PATH.joinpath(".scheme").glob("*.csv")]
+    # ---------------------------- Object Methods --------------------------
+    def run_playlist(self):
+        """
+        Set VLC path, then loads and plays a playlist.
+        """
+        # Create list of videos from playlist, beginning with the path to the VLC executable.
+        vlc_process_cmd: list = [PathManager.VLC_PATH.as_posix()]
 
-    @staticmethod
-    def get_shows(path: Path = PathManager.TV_PATH) -> list:
-        return [PathManager.TV_PATH.stem] + [show.stem for show in path.iterdir() if show.is_dir() and show.stem != ".scheme"]
+        # Add videos from playlist. IMPORTANT: Paths of videos must be URI
+        while self.playlist.video_queue:
+            vlc_process_cmd.append(self.playlist.dequeue_playlist().absolute().as_uri())
 
-    @staticmethod
-    def get_episodes(path: Path = PathManager.TV_PATH) -> list:
-        return [episode.stem for episode in path.iterdir()
-                if episode.suffix not in [".csv", ".txt"]]
+        # Create subprocess
+        p = subprocess.Popen(vlc_process_cmd)
 
     def import_scheme(self) -> sg.Column:
         """
@@ -234,6 +235,23 @@ class Interface:
         # Merge into a list of list, then return as column
         return sg.Column(show_data, size=(290, 400), scrollable=True, key=f"-SCHEME_DETAILS-{self.scheme.title.upper()}-")
 
+    # ---------------------------- Static Data Population Methods --------------------------
+
+    @staticmethod
+    def get_schemes() -> list:
+        return [scheme.stem for scheme in PathManager.TV_PATH.joinpath(".scheme").glob("*.csv")]
+
+    @staticmethod
+    def get_shows(path: Path = PathManager.TV_PATH) -> list:
+        return [PathManager.TV_PATH.stem] + [show.stem for show in path.iterdir() if show.is_dir() and show.stem != ".scheme"]
+
+    @staticmethod
+    def get_episodes(path: Path = PathManager.TV_PATH) -> list:
+        return [episode.stem for episode in path.iterdir()
+                if episode.suffix not in [".csv", ".txt"]]
+
+    # ---------------------------- Static GUI Methods --------------------------
+
     @staticmethod
     def error_message(text: str):
         """
@@ -241,15 +259,7 @@ class Interface:
         :param text: Error message to display to user
         :return: None
         """
-        window = sg.Window("Error", layout=[[sg.Text(text, text_color="red")]])
-
-        while True:
-            event, values = window.read()
-            # End programme if user closes window
-            if event == sg.WIN_CLOSED:
-                break
-
-        window.close()
+        sg.PopupError(text)
 
     @staticmethod
     def success_message(text: str, key: str) -> sg.Text:
@@ -268,46 +278,12 @@ class Interface:
         :param text: Message to display to user
         :return: Returns true if yes is clicked and false if no
         """
-        window = sg.Window("Error", layout=[
-            [
-                sg.Text(text)
-            ],
-            [
-                sg.Button("Yes", button_color="green", key="-YES-"),
-                sg.Button("No", button_color="red", key="-NO-")
-            ]
-        ])
+        popup = sg.PopupYesNo(text)
 
-        while True:
-            event, values = window.read()
-            # End programme if user closes window
-            if event == sg.WIN_CLOSED:
-                break
-
-            if event == "-YES-":
-                window.close()
-                return True
-
-            if event == "-NO-":
-                break
-
-        window.close()
-
-        return False
-
-    def run_playlist(self):
-        """
-        Set VLC path, then loads and plays a playlist.
-        """
-        # Create list of videos from playlist, beginning with the path to the VLC executable.
-        vlc_process_cmd: list = [PathManager.VLC_PATH.as_posix()]
-
-        # Add videos from playlist. IMPORTANT: Paths of videos must be URI
-        while self.playlist.video_queue:
-            vlc_process_cmd.append(self.playlist.dequeue_playlist().absolute().as_uri())
-
-        # Create subprocess
-        p = subprocess.Popen(vlc_process_cmd)
+        if popup == "Yes":
+            return True
+        else:
+            return False
 
     @staticmethod
     def move_center(window):

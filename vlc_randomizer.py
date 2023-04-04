@@ -346,11 +346,11 @@ if __name__ == "__main__":
                     curr_episode = interface.show.get_current_episode(interface.show.path)
                     curr_episode_text = curr_episode.stem
                 except:
-                    episode = Path()
+                    curr_episode = interface.show.path
                     curr_episode_text = ""
 
                 window["-SELECT_EPISODE-"].update(curr_episode_text)
-                window.Element('-EPISODE_SEARCH-').InitialFolder = interface.show
+                window.Element('-EPISODE_SEARCH-').InitialFolder = curr_episode.parent
 
                 # Unhide phase 3 rows
                 interface.unhide_elements(window, "-SELECT_EPISODE-", "-SAVE_SHOW-", "-DISCARD_SHOW-")

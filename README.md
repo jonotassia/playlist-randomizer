@@ -58,4 +58,4 @@ There are 5 main classes in this program:
 * <b>Show</b>: Manages search methods within a TV show, including finding the first, current, or next episodes of the show.
 * <b>Scheme</b>: Manages data in the form of a Pandas dataframe that is loaded from a scheme files.
 * <b>Interface</b>: Controls user inputs and builds the GUI. Also contains methods to load playlist into VLC.
-* <b>PathManager</b>: Controls system level paths that are needed for running the programme, such as the VLC Path and TV Path.
+* <b>PathManager</b>: Controls program level paths that are needed for running the programme, such as the VLC Path and TV Path.

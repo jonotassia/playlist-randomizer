@@ -43,14 +43,14 @@ A playlist will be created using the list of shows and frequencies provided in a
 	![image](https://user-images.githubusercontent.com/24849659/229722895-63697312-f706-4961-be3c-8bc15cf8c2e3.png)
 
 
-File Structure:
+## File Structure:
 
 There are 2 key elements in the file structure of this program:
 
 * <b>.eps files [.txt]</b>: These files are used to point the program to the correct episode of the show. Each subdirectory beneath a show folder will have one of these files and will incrementally point it to the right episode folder by folder.
 * <b>.scheme folder [.csv]</b>: The .scheme folder houses all of the schemes that a user creates. It is created dynmically when the user creates their first scheme.
 
-Data Structure:
+## Data Structure:
 
 There are 5 main classes in this program:
 
@@ -59,3 +59,13 @@ There are 5 main classes in this program:
 * <b>Scheme</b>: Manages data in the form of a Pandas dataframe that is loaded from a scheme files.
 * <b>Interface</b>: Controls user inputs and builds the GUI. Also contains methods to load playlist into VLC.
 * <b>PathManager</b>: Controls program level paths that are needed for running the programme, such as the VLC Path and TV Path.
+
+## Getting Started
+
+If you'd like to use this program as well, you can clone this repository and use pyinstaller to generate your own executable.
+
+1. `git clone https://github.com/jonotassia/playlist-randomizer.git`
+2. `pip install -r requirements.txt`
+3. `pyinstaller -wF vlc_randomizer.py`
+
+Once you've got the application up and running, you can follow this [Quick Start Guide](https://github.com/jonotassia/playlist-randomizer/blob/main/docs/VLC%20Randomizer%20Quick%20Start%20Guide.pdf) to get started.

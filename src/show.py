@@ -43,7 +43,7 @@ class Show:
 
         """
         string = string.as_posix()
-        return [Show.tryint(c) for c in re.split('([0-9]+)', string)]
+        return [Show.tryint(c.lower()) for c in re.split('([0-9]+)', string)]
 
     @staticmethod
     def human_sort(path_list: list) -> None:
@@ -74,14 +74,14 @@ class Show:
         try:
             tag = TinyTag.get(self.current_episode.as_posix())
         except:
-            return 10
+            return 20
 
         if tag.duration:
-            return tag.duration
+            return tag.duration/60
 
         # If data not available on video length, add 10 mins to ensure we do not infinite loop
         else:
-            return 10
+            return 20
 
     # -------------------- Episode Search Functions -----------------------
 

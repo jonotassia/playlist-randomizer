@@ -89,9 +89,9 @@ if __name__ == "__main__":
                     interface.hide_elements(window, "-SHOW_SUCCESS-")
 
                 else:
-                    interface.error_message("Invalid Path.")
-            except OSError:
-                interface.error_message("Invalid Path.")
+                    interface.error_message(f"Invalid Path: {tv_path.as_posix()}")
+            except OSError as err:
+                interface.error_message(f"Invalid Path: {err}")
 
         # --------------- Playlist Layout Event Checks -----------------------
 
@@ -107,9 +107,9 @@ if __name__ == "__main__":
                 if vlc_path.exists():
                     PathManager.VLC_PATH = vlc_path
                 else:
-                    interface.error_message("Invalid Path.")
-            except OSError:
-                interface.error_message("Invalid Path.")
+                    interface.error_message(f"Invalid Path: {vlc_path.as_posix()}")
+            except OSError as err:
+                interface.error_message(f"Invalid Path: {err}")
 
         # Verify the duration entered is an int before adding it to the playlist
         elif event == "-PL_DURATION-":
@@ -328,10 +328,10 @@ if __name__ == "__main__":
                 if show_path.exists():
                     interface.show = Show(show_path)
                 else:
-                    interface.error_message("Invalid Path.")
+                    interface.error_message(f"Invalid Path: {show_path.as_posix()}")
                     continue
-            except OSError:
-                interface.error_message("Invalid Path.")
+            except OSError as err:
+                interface.error_message(f"Invalid Path: {err}")
                 continue
 
             # Hide the success message from the bottom of the frame
@@ -361,10 +361,10 @@ if __name__ == "__main__":
                 if episode.exists():
                     interface.show.write_next_episode(episode)
                 else:
-                    interface.error_message("Invalid Path.")
+                    interface.error_message(f"Invalid Path: {episode.as_posix()}")
                     continue
-            except OSError:
-                interface.error_message("Invalid Path.")
+            except OSError as err:
+                interface.error_message(f"Invalid Path: {err}")
                 continue
 
             if "-SHOW_SUCCESS-" not in window.key_dict:

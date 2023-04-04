@@ -4,6 +4,16 @@ The playlist randomizer is a tool that can be used to randomly select a TV show 
 
 ![Playlist Randomizer](https://user-images.githubusercontent.com/24849659/229719768-3028f6f9-8f0c-4e31-924c-0b9f1b2f485c.png)
 
+## Getting Started
+
+If you'd like to use this program as well, you can clone this repository and use pyinstaller to generate your own executable.
+
+1. `git clone https://github.com/jonotassia/playlist-randomizer.git`
+2. `pip install -r requirements.txt`
+3. `pyinstaller -wF vlc_randomizer.py`
+
+Once you've got the application up and running, you can follow this [Quick Start Guide](https://github.com/jonotassia/playlist-randomizer/blob/main/docs/VLC%20Randomizer%20Quick%20Start%20Guide.pdf) to get started.
+
 ## Generating a Playlist
 
 A playlist will be created using the list of shows and frequencies provided in a playlist scheme:
@@ -59,13 +69,3 @@ There are 5 main classes in this program:
 * <b>Scheme</b>: Manages data in the form of a Pandas dataframe that is loaded from a scheme files.
 * <b>Interface</b>: Controls user inputs and builds the GUI. Also contains methods to load playlist into VLC.
 * <b>PathManager</b>: Controls program level paths that are needed for running the programme, such as the VLC Path and TV Path.
-
-## Getting Started
-
-If you'd like to use this program as well, you can clone this repository and use pyinstaller to generate your own executable.
-
-1. `git clone https://github.com/jonotassia/playlist-randomizer.git`
-2. `pip install -r requirements.txt`
-3. `pyinstaller -wF vlc_randomizer.py`
-
-Once you've got the application up and running, you can follow this [Quick Start Guide](https://github.com/jonotassia/playlist-randomizer/blob/main/docs/VLC%20Randomizer%20Quick%20Start%20Guide.pdf) to get started.

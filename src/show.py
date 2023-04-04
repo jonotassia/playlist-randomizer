@@ -109,7 +109,6 @@ class Show:
             raise err
 
         # Write the first episode to file if write is true.
-
         if write:
             self.write_next_episode(first_episode)
 
@@ -138,7 +137,15 @@ class Show:
 
         # If .eps file does not exist, populate with first episode of show and return first episode
         if not eps_file_path.exists() or not eps_file_path.stat().st_size:
-            return self.get_first_episode(show_path)
+            try:
+                return self.get_first_episode(show_path)
+            except IndexError:
+                sorted_contents: list = [path for path in self.path.iterdir() if
+                                         path.suffix not in [".csv", ".txt"] and path.stem != ".scheme"]
+
+                self.human_sort(sorted_contents)
+
+                return self.find_next_episode(sorted_contents[0], self.path)
 
         # Otherwise, get current episode from .eps file
         current_episode: Path = Path(eps_file_path.read_text())

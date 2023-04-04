@@ -62,38 +62,31 @@ if __name__ == "__main__":
                     if "-PL_SCHEME_PATH-" in window.key_dict:
                         window["-PL_SCHEME_PATH-"].update(values=interface.get_schemes())
 
-                    # Hide playlist sections after scheme selection
-                    if "-VIEW_PLAYLIST-" in window.key_dict:
-                        window["-VIEW_PLAYLIST-"].hide_row()
-                        window["-LAUNCH_VLC-"].hide_row()
-
                     # Reload schemes from new TV Path
                     if "-LOAD_SCHEME_NAME-" in window.key_dict:
                         window["-LOAD_SCHEME_NAME-"].update(values=interface.get_schemes())
 
-                    # Hide Scheme info
-                    if f"-SCHEME_DETAILS-{interface.scheme.title.upper()}-" in window.key_dict:
-                        window[f"-SCHEME_DETAILS-{interface.scheme.title.upper()}-"].hide_row()
-                        window["-SAVE_SCHEME-"].hide_row()
-                        window["-DISCARD_SCHEME-"].hide_row()
-
-                    # Hide scheme save success message
-                    if "-SCHEME_SUCCESS-" in window.key_dict:
-                        window["-SCHEME_SUCCESS-"].hide_row()
-
-                    # Hide episoode sections
-                    if "-SELECT_EPISODE-" in window.key_dict:
-                        window[f"-SELECT_EPISODE-"].hide_row()
-                        window["-SAVE_SHOW-"].hide_row()
-                        window["-DISCARD_SHOW-"].hide_row()
-
-                    # Hide the episode save success message
-                    if "-SHOW_SUCCESS-" in window.key_dict:
-                        window["-SHOW_SUCCESS-"].hide_row()
-
                     # If select show section is loaded, refresh
                     if "-SELECT_SHOW-" in window.key_dict:
                         window["-SELECT_SHOW-"].update(values=interface.get_shows(PathManager.TV_PATH))
+
+                    # Hide playlist sections after scheme selection
+                    interface.hide_elements(window, "-VIEW_PLAYLIST-", "-LAUNCH_VLC-")
+
+                    # Hide Scheme info
+                    interface.hide_elements(window,
+                                            f"-SCHEME_DETAILS-{interface.scheme.title.upper()}-",
+                                            "-SAVE_SCHEME-",
+                                            "-DISCARD_SCHEME-")
+
+                    # Hide scheme save success message
+                    interface.hide_elements(window, "-SCHEME_SUCCESS-")
+
+                    # Hide episoode sections
+                    interface.hide_elements(window, "-SELECT_EPISODE-", "-SAVE_SHOW-", "-DISCARD_SHOW-")
+
+                    # Hide the episode save success message
+                    interface.hide_elements(window, "-SHOW_SUCCESS-")
 
                 else:
                     interface.error_message("Invalid Path.")
@@ -137,9 +130,7 @@ if __name__ == "__main__":
                 interface.error_message("Invalid Scheme.")
 
             # Hide rows if path is changed
-            if "-VIEW_PLAYLIST-" in window.key_dict:
-                window["-VIEW_PLAYLIST-"].hide_row()
-                window["-LAUNCH_VLC-"].hide_row()
+            interface.hide_elements(window, "-VIEW_PLAYLIST-", "-LAUNCH_VLC-")
 
         # Display the current playlist to the user and cascade Launch VLC button if not already expanded
         elif event == "-PL_CONFIRM_PLAYLIST-":
@@ -157,8 +148,7 @@ if __name__ == "__main__":
                     window["-VIEW_PLAYLIST-"].update(values=[vid.stem for vid in interface.playlist.video_queue])
 
                     # Add components back
-                    window["-VIEW_PLAYLIST-"].unhide_row()
-                    window["-LAUNCH_VLC-"].unhide_row()
+                    interface.unhide_elements(window, "-VIEW_PLAYLIST-", "-LAUNCH_VLC-")
 
         # Launch VLC with the current playlist
         elif event == "-LAUNCH_VLC-":
@@ -175,74 +165,54 @@ if __name__ == "__main__":
         # Cascade New Scheme Path section, hiding load scheme if that has already been pressed
         elif event == "-NEW_SCHEME-":
             # If New Scheme Name section is already in window, hide it
-            if "-LOAD_SCHEME_NAME-" in window.key_dict:
-                window["-LOAD_SCHEME_NAME-"].hide_row()
-                window["-CONFIRM_LOAD_SCHEME-"].hide_row()
+            interface.hide_elements(window, "-LOAD_SCHEME_NAME-", "-CONFIRM_LOAD_SCHEME-")
 
             # Hide phase 4 rows
-            if "-SAVE_SCHEME-" in window.key_dict:
-                # Hide phase 4 rows
-                window[f"-SCHEME_DETAILS-{interface.scheme.title.upper()}-"].hide_row()
-                window["-SAVE_SCHEME-"].hide_row()
-                window["-DISCARD_SCHEME-"].hide_row()
-
-                if "-SCHEME_SUCCESS-" in window.key_dict:
-                    window["-SCHEME_SUCCESS-"].hide_row()
+            interface.hide_elements(window,
+                                    "-SAVE_SCHEME-",
+                                    f"-SCHEME_DETAILS-{interface.scheme.title.upper()}-",
+                                    "-DISCARD_SCHEME-",
+                                    "-SCHEME_SUCCESS-")
 
             # If the new scheme section is not already in the layout, add it. Otherwise, unhide it.
             if "-NEW_SCHEME_NAME-" not in window.key_dict:
                 window.extend_layout(window["-SCHEME-"], interface.scheme_phase_3_new)
             else:
-                window["-NEW_SCHEME_NAME-"].unhide_row()
-                window["-CONFIRM_NEW_SCHEME-"].unhide_row()
-
-            # Hide the success message from the bottom of the frame when new scheme loaded
-            if "-SUCCESS_SCHEME-" in window.key_dict:
-                window["-SUCCESS_SCHEME-"].hide_row()
+                interface.unhide_elements(window, "-NEW_SCHEME_NAME-", "-CONFIRM_NEW_SCHEME-")
 
         # Cascade Load Scheme section, hiding new scheme path if that has already been pressed
         elif event == "-LOAD_SCHEME-":
             # If New Scheme Name section is already in window, hide it
-            if "-NEW_SCHEME_NAME-" in window.key_dict:
-                window["-NEW_SCHEME_NAME-"].hide_row()
-                window["-CONFIRM_NEW_SCHEME-"].hide_row()
+            interface.hide_elements(window, "-NEW_SCHEME_NAME-", "-CONFIRM_NEW_SCHEME-")
 
             # Hide phase 4 rows
-            if "-SAVE_SCHEME-" in window.key_dict:
-                # Hide phase 4 rows
-                window[f"-SCHEME_DETAILS-{interface.scheme.title.upper()}-"].hide_row()
-                window["-SAVE_SCHEME-"].hide_row()
-                window["-DISCARD_SCHEME-"].hide_row()
-
-                if "-SCHEME_SUCCESS-" in window.key_dict:
-                    window["-SCHEME_SUCCESS-"].hide_row()
+            interface.hide_elements(window,
+                                    "-SAVE_SCHEME-",
+                                    f"-SCHEME_DETAILS-{interface.scheme.title.upper()}-",
+                                    "-DISCARD_SCHEME-",
+                                    "-SCHEME_SUCCESS-")
 
             # If the existing scheme section is not already in the layout, add it. Otherwise, unhide it.
             if "-LOAD_SCHEME_NAME-" not in window.key_dict:
                 window.extend_layout(window["-SCHEME-"], interface.scheme_phase_3_load)
             else:
-                window["-LOAD_SCHEME_NAME-"].unhide_row()
-                window["-CONFIRM_LOAD_SCHEME-"].unhide_row()
+                interface.unhide_elements(window, "-LOAD_SCHEME_NAME-", "-CONFIRM_LOAD_SCHEME-")
 
         elif event == "-NEW_SCHEME_NAME-":
-            if f"-SCHEME_DETAILS-{interface.scheme.title.upper()}-" in window.key_dict:
-                # Hide phase 4 rows
-                window[f"-SCHEME_DETAILS-{interface.scheme.title.upper()}-"].hide_row()
-                window["-SAVE_SCHEME-"].hide_row()
-                window["-DISCARD_SCHEME-"].hide_row()
-
-                if "-SCHEME_SUCCESS-" in window.key_dict:
-                    window["-SCHEME_SUCCESS-"].hide_row()
+            # Hide phase 4 rows
+            interface.hide_elements(window,
+                                    "-SAVE_SCHEME-",
+                                    f"-SCHEME_DETAILS-{interface.scheme.title.upper()}-",
+                                    "-DISCARD_SCHEME-",
+                                    "-SCHEME_SUCCESS-")
 
         elif event == "-LOAD_SCHEME_NAME-":
-            if f"-SCHEME_DETAILS-{interface.scheme.title.upper()}-" in window.key_dict:
-                # Hide phase 4 rows
-                window[f"-SCHEME_DETAILS-{interface.scheme.title.upper()}-"].hide_row()
-                window["-SAVE_SCHEME-"].hide_row()
-                window["-DISCARD_SCHEME-"].hide_row()
-
-                if "-SCHEME_SUCCESS-" in window.key_dict:
-                    window["-SCHEME_SUCCESS-"].hide_row()
+            # Hide phase 4 rows
+            interface.hide_elements(window,
+                                    "-SAVE_SCHEME-",
+                                    f"-SCHEME_DETAILS-{interface.scheme.title.upper()}-",
+                                    "-DISCARD_SCHEME-",
+                                    "-SCHEME_SUCCESS-")
 
         # Check if scheme exists and whether user is in load or new mode.
         # If so, load that scheme, else create a new one.
@@ -259,18 +229,13 @@ if __name__ == "__main__":
             # If specific instance of scheme is not already loaded, extend the window with it
             elif f"-SCHEME_DETAILS-{interface.scheme.title.upper()}-" not in window.key_dict:
                 window.extend_layout(window["-SCHEME-"], [[interface.import_scheme()]])
-                window["-SAVE_SCHEME-"].unhide_row()
-                window["-DISCARD_SCHEME-"].unhide_row()
 
             else:
-                # Reset scroll bar
+                # Reset scroll bar and unhide the scheme section
                 window[f"-SCHEME_DETAILS-{interface.scheme.title.upper()}-"].contents_changed()
+                interface.unhide_elements(window, f"-SCHEME_DETAILS-{interface.scheme.title.upper()}-")
 
-                # Unhide phase 4 rows
-                if f"-SCHEME_DETAILS-{interface.scheme.title.upper()}-" in window.key_dict:
-                    window[f"-SCHEME_DETAILS-{interface.scheme.title.upper()}-"].unhide_row()
-                window["-SAVE_SCHEME-"].unhide_row()
-                window["-DISCARD_SCHEME-"].unhide_row()
+            interface.unhide_elements(window, "-SAVE_SCHEME-", "-DISCARD_SCHEME-")
 
         elif event == "-CONFIRM_LOAD_SCHEME-":
             if not values["-LOAD_SCHEME_NAME-"]:
@@ -284,18 +249,13 @@ if __name__ == "__main__":
             # If specific instance of scheme is not already loaded, extend the window with it
             elif f"-SCHEME_DETAILS-{interface.scheme.title.upper()}-" not in window.key_dict:
                 window.extend_layout(window["-SCHEME-"], [[interface.import_scheme()]])
-                window["-SAVE_SCHEME-"].unhide_row()
-                window["-DISCARD_SCHEME-"].unhide_row()
 
             else:
-                # Reset scroll bar
+                # Reset scroll bar and unhide the scheme section
                 window[f"-SCHEME_DETAILS-{interface.scheme.title.upper()}-"].contents_changed()
+                interface.unhide_elements(window, f"-SCHEME_DETAILS-{interface.scheme.title.upper()}-")
 
-                # Unhide phase 4 rows
-                if f"-SCHEME_DETAILS-{interface.scheme.title.upper()}-" in window.key_dict:
-                    window[f"-SCHEME_DETAILS-{interface.scheme.title.upper()}-"].unhide_row()
-                window["-SAVE_SCHEME-"].unhide_row()
-                window["-DISCARD_SCHEME-"].unhide_row()
+            interface.unhide_elements(window, "-SAVE_SCHEME-", "-DISCARD_SCHEME-")
 
         # When the save button is pressed, 2 key functions are performed:
         #   1. The changes are compiled in interface.scheme.data
@@ -337,19 +297,18 @@ if __name__ == "__main__":
                     window[f"-SCHEME_FREQ_{index}-"].update(interface.scheme.data.at[index, "frequency"])
 
                 # Hide phase 4 rows
-                window[f"-SCHEME_DETAILS-{interface.scheme.title.upper()}-"].hide_row()
-                window["-SAVE_SCHEME-"].hide_row()
-                window["-DISCARD_SCHEME-"].hide_row()
+                interface.hide_elements(window,
+                                        f"-SCHEME_DETAILS-{interface.scheme.title.upper()}-",
+                                        "-SAVE_SCHEME-",
+                                        "-DISCARD_SCHEME-",
+                                        "-SCHEME_SUCCESS-")
 
             except FileNotFoundError:
-                # Hide phase 4 rows
-                window[f"-SCHEME_DETAILS-{interface.scheme.title.upper()}-"].hide_row()
-                window["-SAVE_SCHEME-"].hide_row()
-                window["-DISCARD_SCHEME-"].hide_row()
-
-            # Hide the success message from the bottom of the frame
-            if "-SCHEME_SUCCESS-" in window.key_dict:
-                window["-SCHEME_SUCCESS-"].hide_row()
+                interface.hide_elements(window,
+                                        f"-SCHEME_DETAILS-{interface.scheme.title.upper()}-",
+                                        "-SAVE_SCHEME-",
+                                        "-DISCARD_SCHEME-",
+                                        "-SCHEME_SUCCESS-")
 
         # --------------- Show Layout Event Checks -----------------------
 
@@ -376,8 +335,7 @@ if __name__ == "__main__":
                 continue
 
             # Hide the success message from the bottom of the frame
-            if "-SHOW_SUCCESS-" in window.key_dict:
-                window["-SHOW_SUCCESS-"].hide_row()
+            interface.hide_elements(window, "-SHOW_SUCCESS-")
 
             # Extend phase 3 rows
             if "-SAVE_SHOW-" not in window.key_dict:
@@ -395,9 +353,7 @@ if __name__ == "__main__":
                 window.Element('-EPISODE_SEARCH-').InitialFolder = interface.show
 
                 # Unhide phase 3 rows
-                window[f"-SELECT_EPISODE-"].unhide_row()
-                window["-SAVE_SHOW-"].unhide_row()
-                window["-DISCARD_SHOW-"].unhide_row()
+                interface.unhide_elements(window, "-SELECT_EPISODE-", "-SAVE_SHOW-", "-DISCARD_SHOW-")
 
         elif event == "-SAVE_SHOW-":
             episode = Path(values["-SELECT_EPISODE-"])
@@ -419,28 +375,13 @@ if __name__ == "__main__":
 
         elif event == "-DISCARD_SHOW-":
             # Hide all phase 3 rows
-            window[f"-SELECT_EPISODE-"].hide_row()
-            window["-SAVE_SHOW-"].hide_row()
-            window["-DISCARD_SHOW-"].hide_row()
-
-            # Hide the success message from the bottom of the frame
-            if "-SHOW_SUCCESS-" in window.key_dict:
-                window["-SHOW_SUCCESS-"].hide_row()
+            interface.hide_elements(window, "-SELECT_EPISODE-", "-SAVE_SHOW-", "-DISCARD_SHOW-", "-SHOW_SUCCESS-")
 
         elif event == "-CLEAR_MARKERS-":
             if interface.confirm_popup("Are you sure you want to do this? All show progress will be reset."):
                 # Clear all show markers
                 Show.clear_episode_files(PathManager.TV_PATH)
-
-                if "-SELECT_EPISODE-" in window.key_dict:
-                    # Hide all phase 3 rows
-                    window[f"-SELECT_EPISODE-"].hide_row()
-                    window["-SAVE_SHOW-"].hide_row()
-                    window["-DISCARD_SHOW-"].hide_row()
-
-                    # Hide the success message from the bottom of the frame
-                    if "-SHOW_SUCCESS-" in window.key_dict:
-                        window["-SHOW_SUCCESS-"].hide_row()
+                interface.hide_elements(window, "-SELECT_EPISODE-", "-SAVE_SHOW-", "-DISCARD_SHOW-", "-SHOW_SUCCESS-")
 
         window.refresh()
 

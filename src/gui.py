@@ -316,6 +316,30 @@ class Interface:
         x, y = (screen_width - win_width) // 2, (screen_height - win_height) // 2
         window.move(x, y)
 
+    @staticmethod
+    def hide_elements(window, *args):
+        """
+        Hides a list of elements by key label.
+        :param window: The window to check for elements in
+        :param args: A list of element keys to hide
+        :return: None
+        """
+        for arg in args:
+            if arg in window.key_dict:
+                window[arg].hide_row()
+
+    @staticmethod
+    def unhide_elements(window: sg.Window, *args):
+        """
+        Unhides a list of elements by key label.
+        :param window: The window to check for elements in
+        :param args: A list of element keys to unhide
+        :return: None
+        """
+        for arg in args:
+            if arg in window.key_dict:
+                window[arg].unhide_row()
+
 
 if __name__ == "__main__":
     pass

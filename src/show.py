@@ -71,7 +71,10 @@ class Show:
 
     @property
     def episode_duration(self):
-        tag = TinyTag.get(self.current_episode.as_posix())
+        try:
+            tag = TinyTag.get(self.current_episode.as_posix())
+        except:
+            return 10
 
         if tag.duration:
             return tag.duration
@@ -112,7 +115,11 @@ class Show:
 
         # If the first value of the returned content is a directory, search in that directory
         if first_episode.is_dir():
-            first_episode = self.get_first_episode(first_episode)
+            try:
+                first_episode = self.get_first_episode(first_episode)
+            # Handle situations where first directory is empty
+            except IndexError:
+                first_episode = self.find_next_episode(first_episode, first_episode.parent)
 
         # Increment the current episode depth and set the current episode
         self.episode_depth += 1

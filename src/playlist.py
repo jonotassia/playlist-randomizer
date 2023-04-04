@@ -29,11 +29,15 @@ class Playlist:
                               self.next_episode_dict[show_path][0],
                               self.next_episode_dict[show_path][1]
                               )
+            # Search for the next episode of the show and return it
+            try:
+                show.current_episode = show.find_next_episode(show.current_episode, show.current_episode.parent)
+            except ValueError:
+                pass
+
+        # If the show hasn't been encountered, return the current episode
         except KeyError:
             show: Show = Show(show_path)
-
-        # Search for the next episode of the show and return it
-        show.current_episode = show.find_next_episode(show.current_episode, show.current_episode.parent)
 
         return show
 

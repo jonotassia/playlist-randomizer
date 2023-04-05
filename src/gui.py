@@ -12,25 +12,23 @@ class Interface:
     def __init__(self):
         self.scheme: Scheme = Scheme("Blank")
         self.playlist: Playlist = Playlist()
-        self.show: Show = None
 
     # --------------------- Main Layout ----------------------------
-    @property
     def main_layout(self):
         layout = [
             [
-                sg.Frame('Playlist', self.playlist_phase_1, size=(350, 800), expand_x=True, key="-PLAYLIST-"),
+                sg.Frame('Playlist', self.playlist_phase_1(), size=(350, 800), expand_x=True, key="-PLAYLIST-"),
                 sg.VSeparator(),
-                sg.Frame('Scheme', self.scheme_phase_1, size=(350, 800), expand_x=True, key="-SCHEME-"),
+                sg.Frame('Scheme', self.scheme_phase_1(), size=(350, 800), expand_x=True, key="-SCHEME-"),
                 sg.VSeparator(),
-                sg.Frame('Shows', self.show_phase_1, size=(350, 800), expand_x=True, key="-SHOWS-")
+                sg.Frame('Shows', self.show_phase_1(), size=(350, 800), expand_x=True, key="-SHOWS-")
             ]
         ]
 
         return layout
 
-    @property
-    def layout(self):
+    @staticmethod
+    def layout():
         # Once the TV_PATH has been entered, add the remaining frames
         layout = [
             [
@@ -46,11 +44,10 @@ class Interface:
         return layout
 
     # --------------------- Playlist Layout ----------------------------
-    @property
-    def playlist_phase_1(self):
+    @staticmethod
+    def playlist_phase_1():
         return [[sg.Button("Generate Playlist", size=(25, 1), key="-GEN_PLAYLIST-")]]
 
-    @property
     def playlist_phase_2(self):
         column_layout = [
             [
@@ -76,7 +73,6 @@ class Interface:
 
         return column_layout
 
-    @property
     def playlist_phase_3(self):
         playlist = [vid.stem for vid in self.playlist.video_queue]
 
@@ -95,12 +91,12 @@ class Interface:
         return column_layout
 
     # --------------------- Scheme Layout ----------------------------
-    @property
-    def scheme_phase_1(self):
+    @staticmethod
+    def scheme_phase_1():
         return [[sg.Button("Modify Scheme", size=(25, 1), key="-MOD_SCHEME-")]]
 
-    @property
-    def scheme_phase_2(self):
+    @staticmethod
+    def scheme_phase_2():
         column_layout = [
             [
                 sg.Button("New Scheme", enable_events=True, size=(10, 1), key="-NEW_SCHEME-"),
@@ -110,8 +106,8 @@ class Interface:
 
         return column_layout
 
-    @property
-    def scheme_phase_3_new(self):
+    @staticmethod
+    def scheme_phase_3_new():
         column_layout = [
             [
                 sg.Text("Scheme Name: "),
@@ -124,7 +120,6 @@ class Interface:
 
         return column_layout
 
-    @property
     def scheme_phase_3_load(self):
         column_layout = [
             [
@@ -141,7 +136,6 @@ class Interface:
 
         return column_layout
 
-    @property
     def scheme_phase_4(self):
         column_layout = [
             [
@@ -156,11 +150,10 @@ class Interface:
         return column_layout
 
     # --------------------- Show Layout ----------------------------
-    @property
-    def show_phase_1(self):
+    @staticmethod
+    def show_phase_1():
         return [[sg.Button("Update Show Marker", size=(25, 1), key="-UPDATE_SHOW-")]]
 
-    @property
     def show_phase_2(self):
         # Loop through shows in tv directory. Add to list unless .scheme folder or not directory
         column_layout = [
@@ -179,15 +172,13 @@ class Interface:
 
         return column_layout
 
-    @property
-    def show_phase_3(self):
-        # Get default value for episode
+    @staticmethod
+    def show_phase_3(show: Show):
         try:
-            episode = self.show.get_current_episode(self.show.path)
+            episode = show.get_current_episode(show.path)
             episode_text = episode.stem
-
         except:
-            episode = Path()
+            episode = show.path
             episode_text = ""
 
         column_layout = [
@@ -233,7 +224,7 @@ class Interface:
                       for k, v in self.scheme.data.to_dict(orient="index").items()]
 
         # Merge into a list of list, then return as column
-        return sg.Column(show_data, size=(290, 400), scrollable=True, key=f"-SCHEME_DETAILS-{self.scheme.title.upper()}-")
+        return sg.Column(show_data, size=(290, 380), scrollable=True, key=f"-SCHEME_DETAILS-{self.scheme.title.upper()}-")
 
     # ---------------------------- Static Data Population Methods --------------------------
 

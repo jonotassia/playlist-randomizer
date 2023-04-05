@@ -81,7 +81,7 @@ class Show:
         if tag.duration:
             return tag.duration / 60
 
-        # If data not available on video length, add 10 mins to ensure we do not infinite loop
+        # If data not available on video length, add 20 mins to ensure we do not infinite loop
         else:
             return 20
 

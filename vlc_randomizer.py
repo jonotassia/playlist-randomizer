@@ -16,7 +16,7 @@ if __name__ == "__main__":
     interface = Interface()
 
     # Create window
-    window = sg.Window("Playlist Randomizer", interface.layout, margins=(40, 20), resizable=True, finalize=True)
+    window = sg.Window("Playlist Randomizer", interface.layout(), margins=(40, 20), resizable=True, finalize=True)
 
     # Create event loop
     while True:
@@ -53,7 +53,7 @@ if __name__ == "__main__":
                     if "-GEN_PLAYLIST-" not in window.key_dict:
                         window.size = 1200, 800
                         Interface.move_center(window)
-                        window.extend_layout(window["-MAIN-"], interface.main_layout)
+                        window.extend_layout(window["-MAIN-"], interface.main_layout())
 
                     # If any other buttons have been expanded that require scheme or show selection,
                     # reload data and hide subsequent elements
@@ -98,7 +98,7 @@ if __name__ == "__main__":
         # If Generate Playlist pressed, cascade related sections if not already cascaded
         elif event == "-GEN_PLAYLIST-":
             if "-VLC_PATH-" not in window.key_dict:
-                window.extend_layout(window["-PLAYLIST-"], interface.playlist_phase_2)
+                window.extend_layout(window["-PLAYLIST-"], interface.playlist_phase_2())
 
         # If VLC_PATH entered, validate and set VLC_PATH variable in PathManager. Otherwise, throw error.
         elif event == "-VLC_PATH-":
@@ -138,7 +138,7 @@ if __name__ == "__main__":
                 # Extend layout with phase 3 sections
                 if "-LAUNCH_VLC-" not in window.key_dict:
                     interface.playlist.generate_playlist(interface.scheme)
-                    window.extend_layout(window["-PLAYLIST-"], interface.playlist_phase_3)
+                    window.extend_layout(window["-PLAYLIST-"], interface.playlist_phase_3())
 
                 # If path has been changed, update view playlist element and unhide
                 else:
@@ -160,7 +160,7 @@ if __name__ == "__main__":
         # Cascade New Scheme and Load Scheme if not already done
         elif event == "-MOD_SCHEME-":
             if "-NEW_SCHEME-" not in window.key_dict:
-                window.extend_layout(window["-SCHEME-"], interface.scheme_phase_2)
+                window.extend_layout(window["-SCHEME-"], interface.scheme_phase_2())
 
         # Cascade New Scheme Path section, hiding load scheme if that has already been pressed
         elif event == "-NEW_SCHEME-":
@@ -176,7 +176,7 @@ if __name__ == "__main__":
 
             # If the new scheme section is not already in the layout, add it. Otherwise, unhide it.
             if "-NEW_SCHEME_NAME-" not in window.key_dict:
-                window.extend_layout(window["-SCHEME-"], interface.scheme_phase_3_new)
+                window.extend_layout(window["-SCHEME-"], interface.scheme_phase_3_new())
             else:
                 interface.unhide_elements(window, "-NEW_SCHEME_NAME-", "-CONFIRM_NEW_SCHEME-")
 
@@ -194,7 +194,7 @@ if __name__ == "__main__":
 
             # If the existing scheme section is not already in the layout, add it. Otherwise, unhide it.
             if "-LOAD_SCHEME_NAME-" not in window.key_dict:
-                window.extend_layout(window["-SCHEME-"], interface.scheme_phase_3_load)
+                window.extend_layout(window["-SCHEME-"], interface.scheme_phase_3_load())
             else:
                 interface.unhide_elements(window, "-LOAD_SCHEME_NAME-", "-CONFIRM_LOAD_SCHEME-")
 
@@ -224,7 +224,7 @@ if __name__ == "__main__":
                 window["-LOAD_SCHEME_NAME-"].update(interface.get_schemes())
 
             if "-SAVE_SCHEME-" not in window.key_dict:
-                window.extend_layout(window["-SCHEME-"], interface.scheme_phase_4)
+                window.extend_layout(window["-SCHEME-"], interface.scheme_phase_4())
 
             # If specific instance of scheme is not already loaded, extend the window with it
             elif f"-SCHEME_DETAILS-{interface.scheme.title.upper()}-" not in window.key_dict:
@@ -244,7 +244,7 @@ if __name__ == "__main__":
             interface.scheme = Scheme.load_playlist_scheme(values["-LOAD_SCHEME_NAME-"][0])
 
             if "-SAVE_SCHEME-" not in window.key_dict:
-                window.extend_layout(window["-SCHEME-"], interface.scheme_phase_4)
+                window.extend_layout(window["-SCHEME-"], interface.scheme_phase_4())
 
             # If specific instance of scheme is not already loaded, extend the window with it
             elif f"-SCHEME_DETAILS-{interface.scheme.title.upper()}-" not in window.key_dict:
@@ -315,7 +315,7 @@ if __name__ == "__main__":
         # If Update Show Marker pressed, cascade related sections if not already cascaded
         elif event == "-UPDATE_SHOW-":
             if "-SELECT_SHOW-" not in window.key_dict:
-                window.extend_layout(window["-SHOWS-"], interface.show_phase_2)
+                window.extend_layout(window["-SHOWS-"], interface.show_phase_2())
 
         elif event == "-SELECT_SHOW-":
             if not values["-SELECT_SHOW-"]:
@@ -326,7 +326,7 @@ if __name__ == "__main__":
                 if values["-SELECT_SHOW-"][0] != PathManager.TV_PATH.stem else PathManager.TV_PATH
             try:
                 if show_path.exists():
-                    interface.show = Show(show_path)
+                    show = Show(show_path)
                 else:
                     interface.error_message(f"Invalid Path: {show_path.as_posix()}")
                     continue
@@ -339,14 +339,14 @@ if __name__ == "__main__":
 
             # Extend phase 3 rows
             if "-SAVE_SHOW-" not in window.key_dict:
-                window.extend_layout(window["-SHOWS-"], interface.show_phase_3)
+                window.extend_layout(window["-SHOWS-"], interface.show_phase_3(show))
             else:
                 # Update select episodes with current path in case it has changed
                 try:
-                    curr_episode = interface.show.get_current_episode(interface.show.path)
+                    curr_episode = show.get_current_episode(show.path)
                     curr_episode_text = curr_episode.stem
                 except:
-                    curr_episode = interface.show.path
+                    curr_episode = show.path
                     curr_episode_text = ""
 
                 window["-SELECT_EPISODE-"].update(curr_episode_text)
@@ -359,7 +359,7 @@ if __name__ == "__main__":
             episode = Path(values["-SELECT_EPISODE-"])
             try:
                 if episode.exists():
-                    interface.show.write_next_episode(episode)
+                    show.write_next_episode(episode)
                 else:
                     interface.error_message(f"Invalid Path: {episode.as_posix()}")
                     continue

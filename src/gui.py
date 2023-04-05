@@ -248,7 +248,7 @@ class Interface:
     @staticmethod
     def get_episodes(path: Path = PathManager.TV_PATH) -> list:
         return [episode.stem for episode in path.iterdir()
-                if episode.suffix not in [".csv", ".txt"]]
+                if episode.suffix in PathManager.VIDEO_EXTENSIONS]
 
     # ---------------------------- Static GUI Methods --------------------------
 

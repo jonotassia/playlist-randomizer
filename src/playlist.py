@@ -49,9 +49,10 @@ class Playlist:
         # Define variables
         queue_length_mins: int = 0
         selected_show: Path
+        timeout_counter: int = 0
 
         # Generate random list of videos
-        while queue_length_mins < self.max_length:
+        while queue_length_mins < self.max_length and timeout_counter <= 50:
             # Select show from list of shows and user generated frequencies
             selected_show = random.choices(playlist_scheme.data["show_path"].to_list(),
                                            weights=playlist_scheme.data["frequency"].to_list())
@@ -62,7 +63,9 @@ class Playlist:
             # Get the next episode of the show
             show = self.get_next_episode(show_path)
 
-            # TODO: Figure out how to ignore movies that have 0 frequency
+            if not show.current_episode.is_file():
+                timeout_counter += 1
+                continue
 
             # Get duration of video and append to total duration
             queue_length_mins += show.episode_duration

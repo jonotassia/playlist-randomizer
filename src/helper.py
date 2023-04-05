@@ -9,6 +9,9 @@ class PathManager:
     USER_PATH: Path = Path(os.environ['USERPROFILE'])
     TV_PATH: Path = None
     VLC_PATH: Path = None
+    VIDEO_EXTENSIONS: list = [".264", ".3ga", ".3gp", ".aac", ".avi", ".cda", ".dash", ".dvr", ".flac", ".ifo", ".m2t",
+                              ".m2ts", ".m3u8", ".m4v", ".mkv", ".mov", ".mp4", ".mpg", ".mts", ".ogg", ".ogv", ".opus",
+                              ".pls", ".rec", ".rmvb", ".snd", ".sub", ".ts", ".vob", ".webm", ".wma", ".mmv", ".zab"]
 
     @classmethod
     def save_paths(cls):

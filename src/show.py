@@ -63,8 +63,10 @@ class Show:
     @current_episode.setter
     def current_episode(self, value: Path):
         if isinstance(value, Path):
-            if value.exists() and value.is_file():
+            if value.exists() and value.is_file() and value.suffix in PathManager.VIDEO_EXTENSIONS:
                 self._current_episode = value
+            else:
+                self._current_episode = Path()
 
         else:
             raise ValueError("Invalid Path.")
@@ -77,7 +79,7 @@ class Show:
             return 20
 
         if tag.duration:
-            return tag.duration/60
+            return tag.duration / 60
 
         # If data not available on video length, add 10 mins to ensure we do not infinite loop
         else:
@@ -87,7 +89,7 @@ class Show:
 
     def get_first_episode(self, search_path: Path, write=True) -> Path:
         """
-        Returns the first episode of a show. If show is arranged into seasons, searches recursively.
+        Returns the first episode of a show, or of a subfolder. If show is arranged into seasons, searches recursively.
         :param write: Typically, this is only false in order to preserve previous episodes in the instance
         that a user does not load Playlist into VLC media player. This will also be written again when loading into VLC.
         :param search_path: Path to initiate search for episode
@@ -95,11 +97,12 @@ class Show:
         # Sort contents of directory, excluding non-media files and folders. If the path is TV_PATH, exclude folders too
         if search_path == PathManager.TV_PATH:
             sorted_contents: list = [path for path in search_path.iterdir() if
-                                     path.suffix not in [".csv",
-                                                         ".txt"] and path.stem != ".scheme" and not path.is_dir()]
+                                     path.suffix in PathManager.VIDEO_EXTENSIONS
+                                     and path.stem != ".scheme" and not path.is_dir()]
         else:
             sorted_contents: list = [path for path in search_path.iterdir() if
-                                     path.suffix not in [".csv", ".txt"] and path.stem != ".scheme"]
+                                     (path.suffix in PathManager.VIDEO_EXTENSIONS or path.is_dir())
+                                     and path.stem != ".scheme"]
 
         self.human_sort(sorted_contents)
 
@@ -115,15 +118,21 @@ class Show:
         # If the first value of the returned content is a directory, search in that directory
         if first_episode.is_dir():
             try:
-                first_episode = self.get_first_episode(first_episode)
+                first_episode = self.get_first_episode(first_episode, write=write)
             # Handle situations where first directory is empty
             except IndexError:
-                first_episode = self.find_next_episode(first_episode, first_episode.parent)
+                first_episode = self.find_next_episode(first_episode, first_episode.parent, write=write)
 
         # Increment the current episode depth and set the current episode
         self.episode_depth += 1
-        self.current_episode = first_episode
-        return first_episode
+
+        # Set current episode. If it fails value error checks, then set to none
+        try:
+            self.current_episode = first_episode
+        except ValueError:
+            self.current_episode = Path()
+
+        return self.current_episode
 
     def get_current_episode(self, show_path: Path) -> Path:
         """
@@ -139,13 +148,16 @@ class Show:
         if not eps_file_path.exists() or not eps_file_path.stat().st_size:
             try:
                 return self.get_first_episode(show_path)
+
+            # If there is no first episode, find the next episode from the top-level path
             except IndexError:
                 sorted_contents: list = [path for path in self.path.iterdir() if
-                                         path.suffix not in [".csv", ".txt"] and path.stem != ".scheme"]
+                                         (path.suffix in PathManager.VIDEO_EXTENSIONS or path.is_dir())
+                                         and path.stem != ".scheme"]
 
                 self.human_sort(sorted_contents)
 
-                return self.find_next_episode(sorted_contents[0], self.path)
+                return self.find_next_episode(sorted_contents[0], self.path, write=True)
 
         # Otherwise, get current episode from .eps file
         current_episode: Path = Path(eps_file_path.read_text())
@@ -155,24 +167,33 @@ class Show:
 
         # Increment the current episode depth and set the current episode
         self.episode_depth += 1
-        self.current_episode = current_episode
-        return current_episode
 
-    def find_next_episode(self, search_item: Path, search_path: Path) -> Path:
+        # Set current episode. If it fails value error checks, then set to none
+        try:
+            self.current_episode = current_episode
+        except ValueError:
+            self.current_episode = Path()
+
+        return self.current_episode
+
+    def find_next_episode(self, search_item: Path, search_path: Path, write: bool = False) -> Path:
         """
         Searches for the next episode or season. If the final episode or season, returns the first one
         :param search_item: The target of the search. It will look for the element that is after this one.
         :param search_path: The path of the search.
+        :param write: Whether or not to write the changes to file
         """
         # if the search item is already a media file, search only media files (assumes we are in media folder)
         if search_path == PathManager.TV_PATH:
             sorted_paths: list = [path for path in search_path.iterdir() if
-                                  path.suffix not in [".csv",
-                                                      ".txt"] and path.stem != ".scheme" and not path.is_dir()]
+                                  path.suffix in PathManager.VIDEO_EXTENSIONS
+                                  and path.stem != ".scheme" and not path.is_dir()]
+
         # Search for next episode in show folder
         else:
             sorted_paths: list = [path for path in search_path.iterdir() if
-                                  path.suffix not in [".csv", ".txt"] and path.stem != ".scheme"]
+                                  (path.suffix in PathManager.VIDEO_EXTENSIONS or path.is_dir())
+                                  and path.stem != ".scheme"]
 
         self.human_sort(sorted_paths)
 
@@ -186,22 +207,27 @@ class Show:
         try:
             next_path: Path = sorted_paths[path_number + 1]
 
+            # If the write flag is set to True, write this. This only would be used in situations where the
+            # find_next_episode method is called for finding the first episode in a series
+            if write:
+                self.write_next_episode(next_path)
+
         # If final episode in the folder, move up a folder and repeat same search.
         # If we arrive in the tv path folder, return the first episode of the show and reset the episode depth
         except IndexError:
-            if self.episode_depth-1 <= 0:
+            if self.episode_depth - 1 <= 0:
                 self.episode_depth = 0
-                return self.get_first_episode(self.path, write=False)
+                return self.get_first_episode(self.path, write=write)
 
             self.episode_depth -= 1
 
-            return self.find_next_episode(search_item.parent, search_path.parent)
+            return self.find_next_episode(search_item.parent, search_path.parent, write=write)
 
         # If we have not reached a media file yet, continue down until one is found.
         # From the new search path, find the first episode in the new subfolder
         if next_path.is_dir():
             try:
-                next_path = self.get_first_episode(next_path)
+                next_path = self.get_first_episode(next_path, write=write)
             # If the file directory is blank, increment the depth counter and return the previous episode
             except IndexError:
                 self.episode_depth -= 1

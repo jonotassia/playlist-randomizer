@@ -54,11 +54,17 @@ class Playlist:
         # Generate random list of videos
         while queue_length_mins < self.max_length and timeout_counter <= 50:
             # Select show from list of shows and user generated frequencies
-            selected_show = random.choices(playlist_scheme.data["show_path"].to_list(),
-                                           weights=playlist_scheme.data["frequency"].to_list())
+            try:
+                selected_show = random.choices(playlist_scheme.data["show_path"].to_list(),
+                                               weights=playlist_scheme.data["frequency"].to_list())
+            except IndexError:
+                continue
 
             # Use .eps text file to determine next episode to play
             show_path = PathManager.TV_PATH.joinpath(selected_show[0])
+
+            if not show_path.exists():
+                continue
 
             # Get the next episode of the show
             show = self.get_next_episode(show_path)

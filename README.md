@@ -6,7 +6,7 @@ The playlist randomizer is a tool that can be used to randomly select a TV show 
 
 ## Getting Started
 
-If you'd like to use this program as well, you can find a copy of it in the `dist` subfolder of this repository. Additionally, if you'd like to make changes, you can clone/fork this repository and use pyinstaller to generate your own executable.
+If you'd like to use this program, you can find a copy of it in the `dist` subfolder of this repository. Additionally, if you'd like to make changes, you can clone/fork this repository and use pyinstaller to generate your own executable.
 
 1. `git clone https://github.com/jonotassia/playlist-randomizer.git`
 2. `pip install -r requirements.txt`
